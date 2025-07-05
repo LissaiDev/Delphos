@@ -88,26 +88,26 @@ type defaultFormatter struct {
 // Format formata a mensagem de log
 func (f *defaultFormatter) Format(level Level, message string, fields map[string]interface{}) string {
 	var result string
-	
+
 	if f.showTime {
 		result += time.Now().Format("2006-01-02 15:04:05") + " "
 	}
-	
+
 	if f.useColors {
 		result += level.Color() + level.String() + "\033[0m "
 	} else {
 		result += level.String() + " "
 	}
-	
+
 	result += message
-	
+
 	if len(fields) > 0 {
 		result += " | "
 		for k, v := range fields {
 			result += fmt.Sprintf("%s=%v ", k, v)
 		}
 	}
-	
+
 	return result
 }
 
@@ -121,7 +121,7 @@ type defaultHandler struct {
 func (h *defaultHandler) Handle(level Level, message string, fields map[string]interface{}) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	
+
 	_, err := fmt.Fprintln(h.writer, message)
 	return err
 }
@@ -156,11 +156,11 @@ func NewWithLevel(level Level) Logger {
 func (l *logger) log(level Level, message string, fields map[string]interface{}) {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
-	
+
 	if level < l.level {
 		return
 	}
-	
+
 	// Mescla campos globais com campos específicos
 	allFields := make(map[string]interface{})
 	for k, v := range l.fields {
@@ -169,16 +169,16 @@ func (l *logger) log(level Level, message string, fields map[string]interface{})
 	for k, v := range fields {
 		allFields[k] = v
 	}
-	
+
 	formatted := l.formatter.Format(level, message, allFields)
-	
+
 	for _, handler := range l.handlers {
 		if err := handler.Handle(level, formatted, allFields); err != nil {
 			// Fallback para log padrão em caso de erro
 			log.Printf("Logger error: %v", err)
 		}
 	}
-	
+
 	// Para FATAL, sempre sair
 	if level == FATAL {
 		os.Exit(1)
@@ -208,24 +208,24 @@ func (l *logger) Fatal(message string, fields ...map[string]interface{}) {
 func (l *logger) WithFields(fields map[string]interface{}) Logger {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
-	
+
 	newLogger := &logger{
 		level:     l.level,
 		formatter: l.formatter,
 		handlers:  l.handlers,
 		fields:    make(map[string]interface{}),
 	}
-	
+
 	// Copia campos existentes
 	for k, v := range l.fields {
 		newLogger.fields[k] = v
 	}
-	
+
 	// Adiciona novos campos
 	for k, v := range fields {
 		newLogger.fields[k] = v
 	}
-	
+
 	return newLogger
 }
 
@@ -253,4 +253,6 @@ func (l *logger) getFields(fields ...map[string]interface{}) map[string]interfac
 		return nil
 	}
 	return fields[0]
-} 
+}
+
+var Log Logger = New()
