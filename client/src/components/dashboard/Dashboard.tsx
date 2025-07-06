@@ -1,11 +1,15 @@
 'use client';
 
+import React from 'react';
 import { Monitor } from '@/types/monitor';
 import { useMonitorData } from '@/hooks/useMonitorData';
+import { useNotifications } from '@/hooks/useNotifications';
 import SystemOverview from '@/components/dashboard/SystemOverview';
 import ResourceCards from '@/components/dashboard/ResourceCards';
 import NetworkStats from '@/components/dashboard/NetworkStats';
 import DiskUsage from '@/components/dashboard/DiskUsage';
+import Notification from '@/components/ui/Notification';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DashboardProps {
   endpoint?: string;
@@ -14,7 +18,21 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ endpoint, data, isLoading: externalLoading }: DashboardProps) {
-  const { data: fetchedData, isLoading, error, refresh } = useMonitorData(endpoint);
+  const { data: fetchedData, isLoading, error, isConnected, refresh, reconnect } = useMonitorData(endpoint);
+  const { notifications, addNotification, removeNotification } = useNotifications();
+
+  // Show notifications for connection status changes
+  React.useEffect(() => {
+    if (isConnected) {
+      addNotification('Connected to server successfully', 'success', 3000);
+    }
+  }, [isConnected, addNotification]);
+
+  React.useEffect(() => {
+    if (error && !isConnected) {
+      addNotification(error, 'error', 0); // Don't auto-dismiss error notifications
+    }
+  }, [error, isConnected, addNotification]);
 
   // Simular dados para demonstração (remover em produção)
   const mockData: Monitor = {
@@ -81,17 +99,14 @@ export default function Dashboard({ endpoint, data, isLoading: externalLoading }
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-slate-700 rounded-lg mb-8 w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-slate-800 rounded-xl"></div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-96 bg-slate-800 rounded-xl"></div>
-              <div className="h-96 bg-slate-800 rounded-xl"></div>
-            </div>
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" className="mb-6" />
+            <h2 className="text-2xl font-semibold text-white mb-2 animate-fade-in">
+              Connecting to Server...
+            </h2>
+            <p className="text-slate-400 text-center max-w-md animate-fade-in-delay">
+              Establishing real-time connection to monitor system resources
+            </p>
           </div>
         </div>
       </div>
@@ -100,6 +115,17 @@ export default function Dashboard({ endpoint, data, isLoading: externalLoading }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+      {/* Notifications */}
+      {notifications.map(notification => (
+        <Notification
+          key={notification.id}
+          message={notification.message}
+          type={notification.type}
+          duration={notification.duration}
+          onClose={() => removeNotification(notification.id)}
+        />
+      ))}
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
@@ -110,18 +136,43 @@ export default function Dashboard({ endpoint, data, isLoading: externalLoading }
             <p className="text-slate-300 animate-fade-in-delay">
               {currentData.host.hostname} • {currentData.host.os}
             </p>
+            {/* Connection Status */}
+            <div className="flex items-center gap-2 mt-2 animate-fade-in-delay">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <span className={`text-sm ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+              {error && (
+                <span className="text-sm text-yellow-400 ml-2">
+                  {error}
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            onClick={handleRefresh}
-            className="mt-4 sm:mt-0 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 animate-fade-in-delay-2"
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </span>
-          </button>
+          <div className="flex gap-2 mt-4 sm:mt-0">
+            <button
+              onClick={reconnect}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 hover:scale-105 animate-fade-in-delay-2"
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reconnect
+              </span>
+            </button>
+            <button
+              onClick={handleRefresh}
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 animate-fade-in-delay-2"
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Refresh
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* System Overview */}
