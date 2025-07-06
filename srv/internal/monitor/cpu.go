@@ -5,31 +5,23 @@ import (
 )
 
 func GetCPUInfo() ([]*CPU, error) {
-	// Obter informações detalhadas das CPUs
+	var cpus []*CPU
+	percent, err := cpu.Percent(0, true)
+	if err != nil {
+		return nil, err
+	}
+	for _, usage := range percent {
+		cpus = append(cpus, &CPU{Usage: usage})
+	}
+
 	info, err := cpu.Info()
 	if err != nil {
 		return nil, err
 	}
 
-	// Obter percentual de uso geral da CPU
-	percent, err := cpu.Percent(0, false)
-	if err != nil {
-		return nil, err
-	}
-
-	var cpus []*CPU
-	usage := 0.0
-	if len(percent) > 0 {
-		usage = percent[0]
-	}
-
-	// Criar uma entrada para cada CPU física
-	for _, cpuInfo := range info {
-		cpus = append(cpus, &CPU{
-			Usage: usage,
-			Model: cpuInfo.ModelName,
-			Cores: int(cpuInfo.Cores),
-		})
+	for idx, cpuInfo := range info {
+		cpus[idx].Model = cpuInfo.ModelName
+		cpus[idx].Cores = int(cpuInfo.Cores)
 	}
 
 	return cpus, nil

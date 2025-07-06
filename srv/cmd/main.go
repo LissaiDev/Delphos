@@ -10,7 +10,8 @@ import (
 )
 
 func main() {
-	logger.Log.Info(fmt.Sprintf("Server started on port %s", config.Env.Port))
+	logger.Log.Info(fmt.Sprintf("\nServer Started\nServer Name: %s\nServer Running on Port: %s", config.Env.Name, config.Env.Port))
 	http.HandleFunc("/api/stats", api.GetMonitorInfo)
+	http.HandleFunc("/api/stats/sse", api.GetMonitorInfoSSE)
 	http.ListenAndServe(config.Env.Port, nil)
 }

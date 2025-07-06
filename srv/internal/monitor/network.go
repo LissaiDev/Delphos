@@ -4,7 +4,7 @@ import "github.com/shirou/gopsutil/v4/net"
 
 func GetNetworkInfo() ([]*Network, error) {
 	var networks []*Network
-	netStats, err := net.IOCounters(false)
+	netStats, err := net.IOCounters(true)
 	if err != nil {
 		return nil, err
 	}
