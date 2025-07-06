@@ -139,7 +139,7 @@ type logger struct {
 func New() Logger {
 	return &logger{
 		level:     INFO,
-		formatter: &JSONFormatter{Pretty: true},
+		formatter: &defaultFormatter{useColors: true, showTime: true},
 		handlers:  []Handler{&defaultHandler{writer: os.Stdout}},
 		fields:    make(map[string]interface{}),
 	}
