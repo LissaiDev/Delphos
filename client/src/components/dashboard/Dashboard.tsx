@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import { Monitor } from "@/types/monitor";
 import { useMonitorData } from "@/hooks/useMonitorData";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -20,7 +20,7 @@ interface DashboardProps {
   isLoading?: boolean;
 }
 
-export default function Dashboard({
+export default React.memo(function Dashboard({
   endpoint,
   data,
   isLoading: externalLoading,
@@ -45,22 +45,31 @@ export default function Dashboard({
     return externalLoading !== undefined ? externalLoading : isLoading;
   }, [externalLoading, isLoading]);
 
+  // Memoize notification handlers to prevent unnecessary re-renders
+  const handleAddNotification = useCallback((message: string, type: "success" | "error" | "warning" | "info", duration: number) => {
+    addNotification(message, type, duration);
+  }, [addNotification]);
+
+  const handleRemoveNotification = useCallback((id: string) => {
+    removeNotification(id);
+  }, [removeNotification]);
+
   // Show notifications for connection status changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isConnected) {
-      addNotification(
+      handleAddNotification(
         "Connected to server successfully",
         "success",
         NOTIFICATION_CONFIG.SUCCESS_DURATION,
       );
     }
-  }, [isConnected, addNotification]);
+  }, [isConnected, handleAddNotification]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (error && !isConnected) {
-      addNotification(error, "error", NOTIFICATION_CONFIG.ERROR_DURATION);
+      handleAddNotification(error, "error", NOTIFICATION_CONFIG.ERROR_DURATION);
     }
-  }, [error, isConnected, addNotification]);
+  }, [error, isConnected, handleAddNotification]);
 
   const handleRefresh = useCallback(() => {
     refresh();
@@ -69,6 +78,19 @@ export default function Dashboard({
   const handleReconnect = useCallback(() => {
     reconnect();
   }, [reconnect]);
+
+  // Memoize notification rendering to prevent unnecessary re-renders
+  const notificationElements = useMemo(() => 
+    notifications.map((notification) => (
+      <Notification
+        key={notification.id}
+        message={notification.message}
+        type={notification.type}
+        duration={notification.duration}
+        onClose={() => handleRemoveNotification(notification.id)}
+      />
+    )), [notifications, handleRemoveNotification]
+  );
 
   // Show loading state if no data is available
   if (isCurrentlyLoading || !currentData) {
@@ -92,15 +114,7 @@ export default function Dashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       {/* Notifications */}
-      {notifications.map((notification) => (
-        <Notification
-          key={notification.id}
-          message={notification.message}
-          type={notification.type}
-          duration={notification.duration}
-          onClose={() => removeNotification(notification.id)}
-        />
-      ))}
+      {notificationElements}
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -122,7 +136,7 @@ export default function Dashboard({
           <div className="flex gap-2 mt-4 sm:mt-0">
             <button
               onClick={handleReconnect}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 hover:scale-105 animate-fade-in-delay-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 animate-fade-in-delay-2"
             >
               <span className="flex items-center gap-2">
                 <Icon name="reconnect" />
@@ -131,7 +145,7 @@ export default function Dashboard({
             </button>
             <button
               onClick={handleRefresh}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105 animate-fade-in-delay-2"
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 hover:scale-105 animate-fade-in-delay-2"
             >
               <span className="flex items-center gap-2">
                 <Icon name="refresh" />
@@ -159,4 +173,4 @@ export default function Dashboard({
       </div>
     </div>
   );
-}
+});

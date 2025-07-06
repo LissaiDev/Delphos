@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Monitor } from "@/types/monitor";
-import { CONNECTION_CONFIG } from "@/config/constants";
+import { CONNECTION_CONFIG, PERFORMANCE_CONFIG } from "@/config/constants";
 
 interface UseMonitorDataReturn {
   data: Monitor | null;
@@ -21,6 +21,8 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
+  const lastDataRef = useRef<Monitor | null>(null);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -31,7 +33,28 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
+    }
     isConnectingRef.current = false;
+  }, []);
+
+  // Debounced data update to prevent excessive re-renders
+  const debouncedSetData = useCallback((newData: Monitor) => {
+    // Clear any pending update
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // Only update if data has actually changed
+    if (JSON.stringify(lastDataRef.current) !== JSON.stringify(newData)) {
+      updateTimeoutRef.current = setTimeout(() => {
+        setData(newData);
+        lastDataRef.current = newData;
+        setError(null);
+      }, PERFORMANCE_CONFIG.DEBOUNCE_DELAY);
+    }
   }, []);
 
   const connect = useCallback(() => {
@@ -60,8 +83,7 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
       eventSource.onmessage = (event) => {
         try {
           const monitorData: Monitor = JSON.parse(event.data);
-          setData(monitorData);
-          setError(null);
+          debouncedSetData(monitorData);
         } catch (err) {
           console.error("Failed to parse SSE data:", err);
           setError("Invalid data format received");
@@ -102,7 +124,7 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
       setIsConnected(false);
       isConnectingRef.current = false;
     }
-  }, [endpoint, cleanup]);
+  }, [endpoint, cleanup, debouncedSetData]);
 
   const reconnect = useCallback(() => {
     reconnectAttemptsRef.current = 0;

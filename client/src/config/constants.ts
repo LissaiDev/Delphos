@@ -14,9 +14,9 @@ export const NOTIFICATION_CONFIG = {
 
 // Animation delays
 export const ANIMATION_DELAYS = {
-  CARD_STAGGER: 100, // ms between card animations
-  FADE_IN_DELAY: 200,
-  FADE_IN_DELAY_2: 400,
+  CARD_STAGGER: 50, // Reduced from 100ms for better performance
+  FADE_IN_DELAY: 100, // Reduced from 200ms
+  FADE_IN_DELAY_2: 200, // Reduced from 400ms
 } as const;
 
 // Performance thresholds
@@ -27,6 +27,14 @@ export const PERFORMANCE_THRESHOLDS = {
   MEDIUM_MEMORY_USAGE: 75,
   HIGH_DISK_USAGE: 90,
   MEDIUM_DISK_USAGE: 75,
+} as const;
+
+// Performance optimization settings
+export const PERFORMANCE_CONFIG = {
+  DEBOUNCE_DELAY: 100, // ms for data updates
+  ANIMATION_DURATION: 200, // ms for transitions
+  MAX_ANIMATIONS: 10, // Maximum concurrent animations
+  REDUCED_MOTION: false, // Respect user preferences
 } as const;
 
 // Default endpoints
