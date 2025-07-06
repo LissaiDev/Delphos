@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -60,6 +61,9 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Configure SSE headers
 	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
@@ -82,6 +86,14 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for msg := range clientChan {
+		fmt.Println()
+		fmt.Println()
+
+		fmt.Println(msg)
+
+		fmt.Println()
+		fmt.Println()
+
 		w.Write([]byte("data: " + msg + "\n\n"))
 		flusher.Flush()
 	}

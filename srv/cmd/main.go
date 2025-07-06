@@ -43,8 +43,8 @@ func main() {
 		}
 	}()
 
-	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler) // JSON endpoint
-	http.Handle("/api/stats/sse", broker)                        // SSE endpoint
+	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler)
+	http.Handle("/api/stats/sse", broker)
 
 	if err := http.ListenAndServe(config.Env.Port, nil); err != nil {
 		logger.Log.Fatal("Failed to start HTTP server", map[string]interface{}{
