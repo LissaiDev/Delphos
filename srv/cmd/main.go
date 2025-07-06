@@ -1,34 +1,50 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/LissaiDev/Delphos/internal/api"
 	"github.com/LissaiDev/Delphos/internal/config"
+	"github.com/LissaiDev/Delphos/internal/monitor"
 	"github.com/LissaiDev/Delphos/pkg/logger"
 )
 
 func main() {
-	// Log server startup information
-	logger.Log.Info("Starting Delphos monitoring server", map[string]interface{}{
-		"server_name": config.Env.Name,
-		"port":        config.Env.Port,
-		"interval":    config.Env.Interval,
-	})
+	broker := api.NewBroker()
+	broker.Start()
+	defer broker.Stop()
 
-	// Register HTTP handlers with detailed logging
-	logger.Log.Info("Registering HTTP handlers", map[string]interface{}{
-		"endpoint_json": "/api/stats",
-		"endpoint_sse":  "/api/stats/sse",
-	})
+	go func() {
+		ticker := time.NewTicker(time.Duration(config.Env.Interval) * time.Second)
+		defer ticker.Stop()
 
-	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler)           // JSON endpoint
-	http.HandleFunc("/api/stats/sse", api.WrappedSystemStatsStreamHandler) // SSE endpoint
+		for range ticker.C {
+			if len(broker.Clients) == 0 {
+				continue
+			}
 
-	// Start HTTP server
-	logger.Log.Info("HTTP server starting", map[string]interface{}{
-		"address": config.Env.Port,
-	})
+			stats, err := monitor.GetSystemStats()
+			if err != nil {
+				continue
+			}
+			bytes, err := json.Marshal(stats)
+			if err != nil {
+				continue
+			}
+
+			logger.Log.Info("Broadcasting stats", map[string]interface{}{
+				"stats": string(bytes),
+			})
+
+			broker.Broadcast(string(bytes))
+
+		}
+	}()
+
+	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler) // JSON endpoint
+	http.Handle("/api/stats/sse", broker)                        // SSE endpoint
 
 	if err := http.ListenAndServe(config.Env.Port, nil); err != nil {
 		logger.Log.Fatal("Failed to start HTTP server", map[string]interface{}{
