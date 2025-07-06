@@ -1,6 +1,5 @@
-import "./globals.css";
+import { ReactNode } from "react";
 import { Titillium_Web, Share_Tech_Mono } from "next/font/google";
-import Providers from "@/components/layout";
 
 const titilliumWeb = Titillium_Web({
   subsets: ["latin"],
@@ -14,19 +13,6 @@ const shareTechMono = Share_Tech_Mono({
   variable: "--font-share-tech-mono",
 });
 
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="pt">
-      <body>
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
-  );
+export default function Providers({ children }: { children: ReactNode }) {
+  return <div className={`${titilliumWeb.variable} ${shareTechMono.variable} antialiased`}>{children}</div>;
 }
