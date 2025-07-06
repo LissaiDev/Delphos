@@ -42,9 +42,7 @@ func GetMonitorInfoSSE(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte("{data: "))
 		json.NewEncoder(w).Encode(stats)
-		w.Write([]byte("}\n\n"))
 
 		flusher.Flush()
 		time.Sleep(time.Second * 5)
