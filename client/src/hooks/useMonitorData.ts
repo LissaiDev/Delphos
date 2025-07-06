@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Monitor } from "@/types/monitor";
+import { CONNECTION_CONFIG } from "@/config/constants";
 
 interface UseMonitorDataReturn {
   data: Monitor | null;
@@ -19,8 +20,7 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
-  const baseReconnectDelay = 1000; // 1 second
+  const isConnectingRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
@@ -31,16 +31,16 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    isConnectingRef.current = false;
   }, []);
 
   const connect = useCallback(() => {
-    if (!endpoint) {
-      setIsLoading(false);
-      setIsConnected(false);
+    if (!endpoint || isConnectingRef.current) {
       return;
     }
 
     cleanup();
+    isConnectingRef.current = true;
 
     try {
       setIsLoading(true);
@@ -54,10 +54,10 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
         setIsLoading(false);
         setError(null);
         reconnectAttemptsRef.current = 0;
+        isConnectingRef.current = false;
       };
 
       eventSource.onmessage = (event) => {
-        console.log(`Received event: ${event}`);
         try {
           const monitorData: Monitor = JSON.parse(event.data);
           setData(monitorData);
@@ -72,14 +72,17 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
         console.error("SSE connection error:", event);
         setIsConnected(false);
         setIsLoading(false);
+        isConnectingRef.current = false;
 
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-          const delay =
-            baseReconnectDelay * Math.pow(2, reconnectAttemptsRef.current);
+        if (reconnectAttemptsRef.current < CONNECTION_CONFIG.MAX_RECONNECT_ATTEMPTS) {
+          const delay = CONNECTION_CONFIG.EXPONENTIAL_BACKOFF 
+            ? CONNECTION_CONFIG.BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current)
+            : CONNECTION_CONFIG.BASE_RECONNECT_DELAY;
+          
           reconnectAttemptsRef.current++;
 
           setError(
-            `Connection lost. Reconnecting in ${delay / 1000}s... (Attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`,
+            `Connection lost. Reconnecting in ${delay / 1000}s... (Attempt ${reconnectAttemptsRef.current}/${CONNECTION_CONFIG.MAX_RECONNECT_ATTEMPTS})`,
           );
 
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -97,6 +100,7 @@ export const useMonitorData = (endpoint?: string): UseMonitorDataReturn => {
       );
       setIsLoading(false);
       setIsConnected(false);
+      isConnectingRef.current = false;
     }
   }, [endpoint, cleanup]);
 
