@@ -55,9 +55,3 @@ func SystemStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"method":   r.Method,
 	})
 }
-
-// WrappedSystemStatsHandler provides CORS-enabled access to system statistics
-// Uses CORSHandler wrapper for consistent CORS handling
-func WrappedSystemStatsHandler(w http.ResponseWriter, r *http.Request) {
-	CORSHandler(w, r, SystemStatsHandler)
-}

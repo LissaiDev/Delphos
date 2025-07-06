@@ -1,8 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/LissaiDev/Delphos/pkg/logger"
 )
 
 type Broker struct {
@@ -58,24 +59,34 @@ func (b *Broker) RemoveClient(client chan string) {
 }
 
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	logger.Log.Info("SSE connection attempt", map[string]interface{}{
+		"remote_addr": r.RemoteAddr,
+		"user_agent":  r.UserAgent(),
+	})
 
 	// Configure SSE headers
 	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
 	// Verify streaming support
 	flusher, ok := w.(http.Flusher)
 	if !ok {
+		logger.Log.Error("Streaming not supported by response writer", map[string]interface{}{
+			"remote_addr": r.RemoteAddr,
+			"user_agent":  r.UserAgent(),
+		})
 		http.Error(w, "Streaming is not supported", http.StatusInternalServerError)
 		return
 	}
 
 	clientChan := make(chan string)
 	b.AddClient(clientChan)
+
+	logger.Log.Info("SSE client connected", map[string]interface{}{
+		"remote_addr":   r.RemoteAddr,
+		"total_clients": len(b.Clients),
+	})
 
 	// Notify client disconnection
 	notifyDesconnection := r.Context().Done()
@@ -86,14 +97,6 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for msg := range clientChan {
-		fmt.Println()
-		fmt.Println()
-
-		fmt.Println(msg)
-
-		fmt.Println()
-		fmt.Println()
-
 		w.Write([]byte("data: " + msg + "\n\n"))
 		flusher.Flush()
 	}

@@ -34,17 +34,31 @@ func main() {
 				continue
 			}
 
-			logger.Log.Info("Broadcasting stats", map[string]interface{}{
-				"stats": string(bytes),
-			})
-
 			broker.Broadcast(string(bytes))
 
 		}
 	}()
 
-	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler)
-	http.Handle("/api/stats/sse", broker)
+	// Create handlers with middleware chain
+	statsHandler := api.ChainMiddleware(
+		http.HandlerFunc(api.SystemStatsHandler),
+		api.MetricsMiddleware,
+		api.ErrorLoggingMiddleware,
+		api.LoggingMiddleware,
+		api.RateLimitMiddleware,
+		api.CORSMiddleware,
+		api.SecurityMiddleware,
+	)
+
+	sseHandler := api.ChainMiddleware(
+		broker,
+		api.StreamingLoggingMiddleware,
+		api.StreamingCORSMiddleware,
+		api.StreamingSecurityMiddleware,
+	)
+
+	http.Handle("/api/stats", statsHandler)
+	http.Handle("/api/stats/sse", sseHandler)
 
 	if err := http.ListenAndServe(config.Env.Port, nil); err != nil {
 		logger.Log.Fatal("Failed to start HTTP server", map[string]interface{}{
