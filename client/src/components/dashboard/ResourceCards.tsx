@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { Memory, CPU } from '@/types/monitor';
-import { formatBytes, getUsageColor, getLoadStatus } from '@/utils/formatters';
+import { formatBytes, formatMemoryMB, getUsageColor, getLoadStatus } from '@/utils/formatters';
 import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
 
@@ -50,9 +50,9 @@ ResourceCard.displayName = 'ResourceCard';
 export default React.memo(function ResourceCards({ memory, cpu, className = '' }: ResourceCardsProps) {
   // Memoize calculations to prevent unnecessary re-renders
   const calculations = useMemo(() => {
-    const memoryUsagePercent = ((memory.used / memory.total) * 100).toFixed(1);
+    const memoryUsagePercent = memory.total > 0 ? ((memory.used / memory.total) * 100).toFixed(1) : '0.0';
     const swapUsagePercent = memory.swapTotal > 0 ? ((memory.swapUsed / memory.swapTotal) * 100).toFixed(1) : '0.0';
-    const avgCpuUsage = cpu.reduce((acc, core) => acc + core.usage, 0) / cpu.length;
+    const avgCpuUsage = cpu.length > 0 ? cpu.reduce((acc, core) => acc + core.usage, 0) / cpu.length : 0;
     const systemLoad = (avgCpuUsage / 100).toFixed(2);
     
     return {
@@ -81,7 +81,7 @@ export default React.memo(function ResourceCards({ memory, cpu, className = '' }
       color: 'blue',
       icon: 'memory',
       subtitle: 'RAM',
-      description: `${formatBytes(memory.used)} / ${formatBytes(memory.total)}`
+      description: `${formatMemoryMB(memory.used)} / ${formatMemoryMB(memory.total)}`
     },
     {
       title: 'Swap Usage',
@@ -90,7 +90,7 @@ export default React.memo(function ResourceCards({ memory, cpu, className = '' }
       color: 'yellow',
       icon: 'swap',
       subtitle: 'Swap',
-      description: `${formatBytes(memory.swapUsed)} / ${formatBytes(memory.swapTotal)}`
+      description: `${formatMemoryMB(memory.swapUsed)} / ${formatMemoryMB(memory.swapTotal)}`
     },
     {
       title: 'System Load',

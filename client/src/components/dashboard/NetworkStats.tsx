@@ -19,14 +19,15 @@ const NetworkItem = React.memo(({ network, index }: { network: Network; index: n
     return `${formatBytes(bytes)}/s`;
   }, [formatBytes]);
 
+  const totalBytes = network.totalBytesSent + network.totalBytesRecv;
   const uploadPercent = useMemo(() => 
-    Math.min((network.totalBytesSent / (network.totalBytesSent + network.totalBytesRecv)) * 100, 100), 
-    [network.totalBytesSent, network.totalBytesRecv]
+    totalBytes > 0 ? Math.min((network.totalBytesSent / totalBytes) * 100, 100) : 0, 
+    [network.totalBytesSent, totalBytes]
   );
 
   const downloadPercent = useMemo(() => 
-    Math.min((network.totalBytesRecv / (network.totalBytesSent + network.totalBytesRecv)) * 100, 100), 
-    [network.totalBytesSent, network.totalBytesRecv]
+    totalBytes > 0 ? Math.min((network.totalBytesRecv / totalBytes) * 100, 100) : 0, 
+    [network.totalBytesRecv, totalBytes]
   );
 
   return (
@@ -64,7 +65,7 @@ const NetworkItem = React.memo(({ network, index }: { network: Network; index: n
             {formatBytes(network.totalBytesSent)}
           </div>
           <div className="text-xs text-slate-400">
-            {formatBytesPerSec(network.totalBytesSent / 3600)}
+            Total sent
           </div>
         </div>
 
@@ -79,7 +80,7 @@ const NetworkItem = React.memo(({ network, index }: { network: Network; index: n
             {formatBytes(network.totalBytesRecv)}
           </div>
           <div className="text-xs text-slate-400">
-            {formatBytesPerSec(network.totalBytesRecv / 3600)}
+            Total received
           </div>
         </div>
       </div>

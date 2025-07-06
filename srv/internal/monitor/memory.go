@@ -52,13 +52,18 @@ func GetMemoryInfo() (*Memory, error) {
 	}
 
 	logger.Log.Debug("Memory information collection completed", map[string]interface{}{
-		"total_memory_mb":      memoryInfo.Total,
-		"free_memory_mb":       memoryInfo.Free,
-		"used_memory_mb":       memoryInfo.Used,
-		"memory_usage_percent": (memoryInfo.Used / memoryInfo.Total) * 100,
-		"swap_total_mb":        memoryInfo.SwapTotal,
-		"swap_free_mb":         memoryInfo.SwapFree,
-		"swap_used_mb":         memoryInfo.SwapUsed,
+		"total_memory_mb": memoryInfo.Total,
+		"free_memory_mb":  memoryInfo.Free,
+		"used_memory_mb":  memoryInfo.Used,
+		"memory_usage_percent": func() float64 {
+			if memoryInfo.Total > 0 {
+				return (memoryInfo.Used / memoryInfo.Total) * 100
+			}
+			return 0
+		}(),
+		"swap_total_mb": memoryInfo.SwapTotal,
+		"swap_free_mb":  memoryInfo.SwapFree,
+		"swap_used_mb":  memoryInfo.SwapUsed,
 	})
 
 	return memoryInfo, nil

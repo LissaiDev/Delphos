@@ -40,10 +40,15 @@ func GetSystemStats() (*Monitor, error) {
 		return nil, err
 	}
 	logger.Log.Debug("Memory information collected successfully", map[string]interface{}{
-		"total_memory_gb":      mem.Total / 1024 / 1024 / 1024,
-		"used_memory_gb":       mem.Used / 1024 / 1024 / 1024,
-		"free_memory_gb":       mem.Free / 1024 / 1024 / 1024,
-		"memory_usage_percent": (mem.Used / mem.Total) * 100,
+		"total_memory_gb": mem.Total / 1024 / 1024 / 1024,
+		"used_memory_gb":  mem.Used / 1024 / 1024 / 1024,
+		"free_memory_gb":  mem.Free / 1024 / 1024 / 1024,
+		"memory_usage_percent": func() float64 {
+			if mem.Total > 0 {
+				return (mem.Used / mem.Total) * 100
+			}
+			return 0
+		}(),
 	})
 
 	// Collect CPU information
@@ -115,13 +120,23 @@ func GetSystemStats() (*Monitor, error) {
 	}
 
 	logger.Log.Info("System statistics collection completed", map[string]interface{}{
-		"collection_time":      collectionTime.String(),
-		"hostname":             host.Hostname,
-		"cpu_cores":            len(cpu),
-		"disk_partitions":      len(disk),
-		"network_interfaces":   len(net),
-		"memory_usage_percent": (mem.Used / mem.Total) * 100,
-		"cpu_usage_percent":    cpu[0].Usage,
+		"collection_time":    collectionTime.String(),
+		"hostname":           host.Hostname,
+		"cpu_cores":          len(cpu),
+		"disk_partitions":    len(disk),
+		"network_interfaces": len(net),
+		"memory_usage_percent": func() float64 {
+			if mem.Total > 0 {
+				return (mem.Used / mem.Total) * 100
+			}
+			return 0
+		}(),
+		"cpu_usage_percent": func() float64 {
+			if len(cpu) > 0 {
+				return cpu[0].Usage
+			}
+			return 0
+		}(),
 	})
 
 	return result, nil

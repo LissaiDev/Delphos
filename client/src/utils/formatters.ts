@@ -9,6 +9,16 @@ export const formatBytes = (bytes: number): string => {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
 };
 
+// Format memory values that come from backend in MB
+export const formatMemoryMB = (mb: number): string => {
+  if (mb === 0) return '0 MB';
+  if (mb < 1024) return `${mb.toFixed(1)} MB`;
+  const gb = mb / 1024;
+  if (gb < 1024) return `${gb.toFixed(1)} GB`;
+  const tb = gb / 1024;
+  return `${tb.toFixed(1)} TB`;
+};
+
 export const formatBytesPerSec = (bytes: number): string => {
   return `${formatBytes(bytes)}/s`;
 };

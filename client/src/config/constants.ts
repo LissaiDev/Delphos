@@ -39,5 +39,5 @@ export const PERFORMANCE_CONFIG = {
 
 // Default endpoints
 export const ENDPOINTS = {
-  DEFAULT_SSE: 'http://localhost:8080/api/stats/sse',
-} as const; 
+  DEFAULT_SSE: "http://192.168.10.39:8080/api/stats/sse",
+} as const;
