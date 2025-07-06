@@ -81,60 +81,71 @@ func SystemStatsStreamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Notify client disconnection
+	notifyDesconnection := r.Context().Done()
+	ticker := time.NewTicker(time.Duration(config.Env.Interval) * time.Second)
+	defer ticker.Stop()
+
 	// Stream system stats at configured intervals
 	streamCount := 0
 	for {
-		streamCount++
-
-		logger.Log.Debug("Generating statistics for SSE stream", map[string]interface{}{
-			"stream_count": streamCount,
-			"interval":     config.Env.Interval,
-		})
-
-		// Generate system statistics
-		startTime := time.Now()
-		stats, err := monitor.GetSystemStats()
-		generationTime := time.Since(startTime)
-
-		if err != nil {
-			logger.Log.Error("Failed to generate system statistics for SSE", map[string]interface{}{
-				"error":           err.Error(),
-				"stream_count":    streamCount,
-				"generation_time": generationTime.String(),
+		select {
+		case <-notifyDesconnection:
+			logger.Log.Info("Client disconnected", map[string]interface{}{
+				"endpoint": r.URL.String(),
 			})
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		}
+		case <-ticker.C:
+			streamCount++
 
-		// Log successful statistics generation
-		logger.Log.Debug("Statistics generated for SSE stream", map[string]interface{}{
-			"stream_count":        streamCount,
-			"generation_time":     generationTime.String(),
-			"hostname":            stats.Host.Hostname,
-			"cpu_usage":           stats.CPU[0].Usage,
-			"memory_used_percent": (stats.Memory.Used / stats.Memory.Total) * 100,
-		})
-
-		// Format and send SSE data
-		w.Write([]byte("data: "))
-		if err := json.NewEncoder(w).Encode(stats); err != nil {
-			logger.Log.Error("Failed to encode SSE data", map[string]interface{}{
-				"error":        err.Error(),
+			logger.Log.Debug("Generating statistics for SSE stream", map[string]interface{}{
 				"stream_count": streamCount,
+				"interval":     config.Env.Interval,
 			})
-			return
+
+			// Generate system statistics
+			startTime := time.Now()
+			stats, err := monitor.GetSystemStats()
+			generationTime := time.Since(startTime)
+
+			if err != nil {
+				logger.Log.Error("Failed to generate system statistics for SSE", map[string]interface{}{
+					"error":           err.Error(),
+					"stream_count":    streamCount,
+					"generation_time": generationTime.String(),
+				})
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Log successful statistics generation
+			logger.Log.Debug("Statistics generated for SSE stream", map[string]interface{}{
+				"stream_count":        streamCount,
+				"generation_time":     generationTime.String(),
+				"hostname":            stats.Host.Hostname,
+				"cpu_usage":           stats.CPU[0].Usage,
+				"memory_used_percent": (stats.Memory.Used / stats.Memory.Total) * 100,
+			})
+
+			// Format and send SSE data
+			w.Write([]byte("data: "))
+			if err := json.NewEncoder(w).Encode(stats); err != nil {
+				logger.Log.Error("Failed to encode SSE data", map[string]interface{}{
+					"error":        err.Error(),
+					"stream_count": streamCount,
+				})
+				return
+			}
+			w.Write([]byte("\n\n"))
+
+			flusher.Flush()
+
+			logger.Log.Debug("SSE data sent successfully", map[string]interface{}{
+				"stream_count": streamCount,
+				"endpoint":     r.URL.String(),
+			})
+
 		}
-		w.Write([]byte("\n\n"))
-
-		flusher.Flush()
-
-		logger.Log.Debug("SSE data sent successfully", map[string]interface{}{
-			"stream_count": streamCount,
-			"endpoint":     r.URL.String(),
-		})
-
-		// Wait for next interval
-		time.Sleep(time.Second * time.Duration(config.Env.Interval))
 	}
 }
 
