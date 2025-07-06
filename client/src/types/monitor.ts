@@ -1,10 +1,10 @@
-interface Host {
+export interface Host {
     hostname: string;
     os: string;
     uptime: number;
   }
   
-  interface Memory {
+  export interface Memory {
     total: number;
     used: number;
     free: number;
@@ -13,13 +13,13 @@ interface Host {
     swapFree: number;
   }
   
-  interface CPU {
+  export interface CPU {
     usage: number;
     model: string;
     cores: number;
   }
   
-  interface Disk {
+  export interface Disk {
     mountpoint: string;
     type: string;
     total: number;
@@ -28,13 +28,13 @@ interface Host {
     usedPercent: number;
   }
   
-  interface Network {
+  export interface Network {
     totalBytesSent: number;
     totalBytesRecv: number;
     interfaceName: string;
   }
   
-  interface Monitor {
+  export interface Monitor {
     host: Host;
     memory: Memory;
     cpu: CPU[];
