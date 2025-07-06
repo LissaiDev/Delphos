@@ -51,11 +51,11 @@ This starts the Delphos Server API on the port specified in `.env` (defaulting t
 2.  **Install Client Dependencies:**
     ```bash
     cd Delphos/client
-    npm install
+    bun install
     ```
 3.  **Run the Client:**
     ```bash
-    npm run dev
+    bun run dev
     ```
 
 This starts the Next.js development server, which will connect to the Delphos Server API on the correct port for real-time monitoring.
