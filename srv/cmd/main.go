@@ -10,8 +10,14 @@ import (
 )
 
 func main() {
-	logger.Log.Info(fmt.Sprintf("\nServer Started\nServer Name: %s\nServer Running on Port: %s", config.Env.Name, config.Env.Port))
-	http.HandleFunc("/api/stats", api.GetMonitorInfo)
-	http.HandleFunc("/api/stats/sse", api.GetMonitorInfoSSE)
+	// Log server startup information
+	logger.Log.Info(fmt.Sprintf("\nServer Started\nServer Name: %s\nServer Running on Port: %s",
+		config.Env.Name, config.Env.Port))
+
+	// Register HTTP handlers
+	http.HandleFunc("/api/stats", api.WrappedSystemStatsHandler)           // JSON endpoint
+	http.HandleFunc("/api/stats/sse", api.WrappedSystemStatsStreamHandler) // SSE endpoint
+
+	// Start HTTP server
 	http.ListenAndServe(config.Env.Port, nil)
 }

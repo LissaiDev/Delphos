@@ -2,49 +2,58 @@ package monitor
 
 import "fmt"
 
+// Host represents system host information
 type Host struct {
-	Hostname string `json:"hostname"`
-	OS       string `json:"os"`
-	UpTime   uint64 `json:"uptime"`
+	Hostname string `json:"hostname"` // System hostname
+	OS       string `json:"os"`       // Operating system name
+	UpTime   uint64 `json:"uptime"`   // System uptime in seconds
 }
 
+// Memory represents system memory statistics
 type Memory struct {
-	Total     float64 `json:"total"`
-	Used      float64 `json:"used"`
-	Free      float64 `json:"free"`
-	SwapTotal float64 `json:"swapTotal"`
-	SwapUsed  float64 `json:"swapUsed"`
-	SwapFree  float64 `json:"swapFree"`
+	Total     float64 `json:"total"`     // Total physical memory in bytes
+	Used      float64 `json:"used"`      // Used physical memory in bytes
+	Free      float64 `json:"free"`      // Free physical memory in bytes
+	SwapTotal float64 `json:"swapTotal"` // Total swap memory in bytes
+	SwapUsed  float64 `json:"swapUsed"`  // Used swap memory in bytes
+	SwapFree  float64 `json:"swapFree"`  // Free swap memory in bytes
 }
 
+// CPU represents CPU information and usage statistics
 type CPU struct {
-	Usage float64 `json:"usage"`
-	Model string  `json:"model"`
-	Cores int     `json:"cores"`
+	Usage float64 `json:"usage"` // CPU usage percentage
+	Model string  `json:"model"` // CPU model name
+	Cores int     `json:"cores"` // Number of CPU cores
 }
 
+// Disk represents disk partition information and usage statistics
 type Disk struct {
-	Mountpoint  string  `json:"mountpoint"`
-	Type        string  `json:"type"`
-	Total       float64 `json:"total"`
-	Used        float64 `json:"used"`
-	Free        float64 `json:"free"`
-	UsedPercent float64 `json:"usedPercent"`
+	Mountpoint  string  `json:"mountpoint"`  // Mount point path
+	Type        string  `json:"type"`        // File system type
+	Total       float64 `json:"total"`       // Total disk space in bytes
+	Used        float64 `json:"used"`        // Used disk space in bytes
+	Free        float64 `json:"free"`        // Free disk space in bytes
+	UsedPercent float64 `json:"usedPercent"` // Disk usage percentage
 }
 
+// Network represents network interface statistics
 type Network struct {
-	TotalBytesSent uint64 `json:"totalBytesSent"`
-	TotalBytesRecv uint64 `json:"totalBytesRecv"`
-	InterfaceName  string `json:"interfaceName"`
+	TotalBytesSent uint64 `json:"totalBytesSent"` // Total bytes sent
+	TotalBytesRecv uint64 `json:"totalBytesRecv"` // Total bytes received
+	InterfaceName  string `json:"interfaceName"`  // Network interface name
 }
 
+// Monitor represents comprehensive system monitoring data
+// Contains all system statistics in a consolidated structure
 type Monitor struct {
-	Host    *Host      `json:"host"`
-	Memory  *Memory    `json:"memory"`
-	CPU     []*CPU     `json:"cpu"`
-	Disk    []*Disk    `json:"disk"`
-	Network []*Network `json:"network"`
+	Host    *Host      `json:"host"`    // Host information
+	Memory  *Memory    `json:"memory"`  // Memory statistics
+	CPU     []*CPU     `json:"cpu"`     // CPU information (one per core)
+	Disk    []*Disk    `json:"disk"`    // Disk information (one per partition)
+	Network []*Network `json:"network"` // Network statistics (one per interface)
 }
+
+// String methods for pretty printing
 
 func (h *Host) String() string {
 	return fmt.Sprintf("Hostname: %s\nOS: %s\nUptime: %d",
