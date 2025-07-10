@@ -4,7 +4,17 @@ import (
 	"net/http"
 )
 
-// MiddlewareChain represents a chain of middleware functions
+// MiddlewareChain representa uma cadeia de middlewares.
+// Use Add para adicionar middlewares (funções puras ou da factory).
+// Exemplo:
+//
+//	factory := NewMiddlewareFactory(logger.Log, RateLimitConfig{Window: time.Second})
+//	chain := NewMiddlewareChain().
+//	  Add(SecurityMiddleware).
+//	  Add(CORSMiddleware).
+//	  Add(factory.RateLimitMiddleware).
+//	  Add(factory.LoggingMiddleware)
+//	handler := chain.Apply(finalHandler)
 type MiddlewareChain struct {
 	middlewares []MiddlewareFunc
 }
@@ -32,23 +42,4 @@ func (mc *MiddlewareChain) Apply(handler http.Handler) http.Handler {
 		handler = mc.middlewares[i](handler)
 	}
 	return handler
-}
-
-// NewAPIChain creates a standard API middleware chain
-func NewAPIChain() *MiddlewareChain {
-	return NewMiddlewareChain().
-		Add(SecurityMiddleware).
-		Add(CORSMiddleware).
-		Add(RateLimitMiddleware).
-		Add(LoggingMiddleware).
-		Add(ErrorLoggingMiddleware).
-		Add(MetricsMiddleware)
-}
-
-// NewStreamingChain creates a streaming-specific middleware chain
-func NewStreamingChain() *MiddlewareChain {
-	return NewMiddlewareChain().
-		Add(StreamingSecurityMiddleware).
-		Add(StreamingCORSMiddleware).
-		Add(StreamingLoggingMiddleware)
 }

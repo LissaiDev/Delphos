@@ -22,12 +22,13 @@ type Application struct {
 // NewApplication creates a new application instance
 func NewApplication() *Application {
 	log := logger.Log
+	rateLimitConfig := api.RateLimitConfig{Window: time.Second}
 	return &Application{
 		broker:            api.NewBrokerWithLogger(log),
 		statsService:      monitor.NewStatsService(log),
 		logger:            log,
 		config:            &config.Env,
-		middlewareFactory: api.NewMiddlewareFactory(log),
+		middlewareFactory: api.NewMiddlewareFactory(log, rateLimitConfig),
 	}
 }
 
@@ -70,9 +71,19 @@ func (app *Application) startStatsBackgroundProcess() {
 
 // setupRoutes configures HTTP routes with middleware chains
 func (app *Application) setupRoutes() {
-	// Create middleware chains using the factory
-	apiChain := app.middlewareFactory.NewAPIChainWithLogger()
-	streamingChain := app.middlewareFactory.NewStreamingChainWithLogger()
+	// Create middleware chains using the factory and pure functions
+	apiChain := api.NewMiddlewareChain().
+		Add(api.SecurityMiddleware).
+		Add(api.CORSMiddleware).
+		Add(app.middlewareFactory.RateLimitMiddleware).
+		Add(app.middlewareFactory.LoggingMiddleware).
+		Add(app.middlewareFactory.ErrorLoggingMiddleware).
+		Add(app.middlewareFactory.MetricsMiddleware)
+
+	streamingChain := api.NewMiddlewareChain().
+		Add(api.StreamingSecurityMiddleware).
+		Add(api.StreamingCORSMiddleware).
+		Add(app.middlewareFactory.StreamingLoggingMiddleware)
 
 	// Create handlers
 	statsHandler := apiChain.Apply(http.HandlerFunc(api.SystemStatsHandler))
