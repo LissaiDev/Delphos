@@ -11,14 +11,20 @@ type Broker struct {
 	deadClient chan chan string
 	newClient  chan chan string
 	message    chan string
+	logger     logger.BasicLogger
 }
 
 func NewBroker() *Broker {
+	return NewBrokerWithLogger(logger.Log)
+}
+
+func NewBrokerWithLogger(log logger.BasicLogger) *Broker {
 	return &Broker{
 		Clients:    make(map[chan string]bool),
 		deadClient: make(chan chan string),
 		newClient:  make(chan chan string),
 		message:    make(chan string),
+		logger:     log,
 	}
 }
 
@@ -59,7 +65,7 @@ func (b *Broker) RemoveClient(client chan string) {
 }
 
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logger.Log.Info("SSE connection attempt", map[string]interface{}{
+	b.logger.Info("SSE connection attempt", map[string]interface{}{
 		"remote_addr": r.RemoteAddr,
 		"user_agent":  r.UserAgent(),
 	})
@@ -72,7 +78,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Verify streaming support
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		logger.Log.Error("Streaming not supported by response writer", map[string]interface{}{
+		b.logger.Error("Streaming not supported by response writer", map[string]interface{}{
 			"remote_addr": r.RemoteAddr,
 			"user_agent":  r.UserAgent(),
 		})
@@ -83,7 +89,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	clientChan := make(chan string)
 	b.AddClient(clientChan)
 
-	logger.Log.Info("SSE client connected", map[string]interface{}{
+	b.logger.Info("SSE client connected", map[string]interface{}{
 		"remote_addr":   r.RemoteAddr,
 		"total_clients": len(b.Clients),
 	})

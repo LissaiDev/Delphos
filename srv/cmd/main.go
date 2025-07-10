@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -11,59 +10,101 @@ import (
 	"github.com/LissaiDev/Delphos/pkg/logger"
 )
 
-func main() {
-	broker := api.NewBroker()
-	broker.Start()
-	defer broker.Stop()
+// Application encapsulates the main application logic
+type Application struct {
+	broker            *api.Broker
+	statsService      *monitor.StatsService
+	logger            logger.BasicLogger
+	config            *config.Environment
+	middlewareFactory *api.MiddlewareFactory
+}
 
-	go func() {
-		ticker := time.NewTicker(time.Duration(config.Env.Interval) * time.Second)
-		defer ticker.Stop()
+// NewApplication creates a new application instance
+func NewApplication() *Application {
+	log := logger.Log
+	return &Application{
+		broker:            api.NewBrokerWithLogger(log),
+		statsService:      monitor.NewStatsService(log),
+		logger:            log,
+		config:            &config.Env,
+		middlewareFactory: api.NewMiddlewareFactory(log),
+	}
+}
 
-		for range ticker.C {
-			if len(broker.Clients) == 0 {
-				continue
-			}
+// Start starts the application
+func (app *Application) Start() error {
+	app.broker.Start()
+	defer app.broker.Stop()
 
-			stats, err := monitor.GetSystemStats()
-			if err != nil {
-				continue
-			}
-			bytes, err := json.Marshal(stats)
-			if err != nil {
-				continue
-			}
+	// Start background stats broadcasting
+	go app.startStatsBackgroundProcess()
 
-			broker.Broadcast(string(bytes))
+	// Setup HTTP routes
+	app.setupRoutes()
 
+	// Start HTTP server
+	return app.startHTTPServer()
+}
+
+// startStatsBackgroundProcess handles periodic stats broadcasting
+func (app *Application) startStatsBackgroundProcess() {
+	ticker := time.NewTicker(time.Duration(app.config.Interval) * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		if len(app.broker.Clients) == 0 {
+			continue
 		}
-	}()
 
-	// Create handlers with middleware chain
-	statsHandler := api.ChainMiddleware(
-		http.HandlerFunc(api.SystemStatsHandler),
-		api.MetricsMiddleware,
-		api.ErrorLoggingMiddleware,
-		api.LoggingMiddleware,
-		api.RateLimitMiddleware,
-		api.CORSMiddleware,
-		api.SecurityMiddleware,
-	)
+		data, err := app.statsService.GetStatsJSON()
+		if err != nil {
+			app.logger.Error("Failed to get stats JSON", map[string]interface{}{
+				"error": err.Error(),
+			})
+			continue
+		}
 
-	sseHandler := api.ChainMiddleware(
-		broker,
-		api.StreamingLoggingMiddleware,
-		api.StreamingCORSMiddleware,
-		api.StreamingSecurityMiddleware,
-	)
+		app.broker.Broadcast(string(data))
+	}
+}
 
+// setupRoutes configures HTTP routes with middleware chains
+func (app *Application) setupRoutes() {
+	// Create middleware chains using the factory
+	apiChain := app.middlewareFactory.NewAPIChainWithLogger()
+	streamingChain := app.middlewareFactory.NewStreamingChainWithLogger()
+
+	// Create handlers
+	statsHandler := apiChain.Apply(http.HandlerFunc(api.SystemStatsHandler))
+	sseHandler := streamingChain.Apply(app.broker)
+
+	// Register routes
 	http.Handle("/api/stats", statsHandler)
 	http.Handle("/api/stats/sse", sseHandler)
+}
 
-	if err := http.ListenAndServe(config.Env.Port, nil); err != nil {
-		logger.Log.Fatal("Failed to start HTTP server", map[string]interface{}{
+// startHTTPServer starts the HTTP server
+func (app *Application) startHTTPServer() error {
+	app.logger.Info("Starting HTTP server", map[string]interface{}{
+		"port": app.config.Port,
+		"name": app.config.Name,
+	})
+
+	if err := http.ListenAndServe(app.config.Port, nil); err != nil {
+		app.logger.Fatal("Failed to start HTTP server", map[string]interface{}{
 			"error": err.Error(),
-			"port":  config.Env.Port,
+			"port":  app.config.Port,
+		})
+		return err
+	}
+	return nil
+}
+
+func main() {
+	app := NewApplication()
+	if err := app.Start(); err != nil {
+		logger.Log.Fatal("Application failed to start", map[string]interface{}{
+			"error": err.Error(),
 		})
 	}
 }

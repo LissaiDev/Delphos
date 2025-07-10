@@ -5,22 +5,28 @@ import (
 	"github.com/shirou/gopsutil/v4/cpu"
 )
 
+// GetCPUInfo returns CPU information for the system
 func GetCPUInfo() ([]*CPU, error) {
-	logger.Log.Debug("Starting CPU information collection")
+	return getCPUInfoWithLogger(logger.Log)
+}
+
+// getCPUInfoWithLogger returns CPU information using the provided logger
+func getCPUInfoWithLogger(log logger.BasicLogger) ([]*CPU, error) {
+	log.Debug("Starting CPU information collection")
 
 	var cpus []*CPU
 
 	// Get CPU usage percentages
-	logger.Log.Debug("Collecting CPU usage percentages")
+	log.Debug("Collecting CPU usage percentages")
 	percent, err := cpu.Percent(0, true)
 	if err != nil {
-		logger.Log.Error("Failed to collect CPU usage percentages", map[string]interface{}{
+		log.Error("Failed to collect CPU usage percentages", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("CPU usage percentages collected", map[string]interface{}{
+	log.Debug("CPU usage percentages collected", map[string]interface{}{
 		"cpu_count":    len(percent),
 		"usage_values": percent,
 	})
@@ -30,16 +36,16 @@ func GetCPUInfo() ([]*CPU, error) {
 	}
 
 	// Get CPU detailed information
-	logger.Log.Debug("Collecting CPU detailed information")
+	log.Debug("Collecting CPU detailed information")
 	info, err := cpu.Info()
 	if err != nil {
-		logger.Log.Error("Failed to collect CPU detailed information", map[string]interface{}{
+		log.Error("Failed to collect CPU detailed information", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("CPU detailed information collected", map[string]interface{}{
+	log.Debug("CPU detailed information collected", map[string]interface{}{
 		"cpu_info_count": len(info),
 	})
 
@@ -48,7 +54,7 @@ func GetCPUInfo() ([]*CPU, error) {
 			cpus[idx].Model = cpuInfo.ModelName
 			cpus[idx].Cores = int(cpuInfo.Cores)
 
-			logger.Log.Debug("CPU core information processed", map[string]interface{}{
+			log.Debug("CPU core information processed", map[string]interface{}{
 				"core_index": idx,
 				"model":      cpuInfo.ModelName,
 				"cores":      cpuInfo.Cores,
@@ -57,7 +63,7 @@ func GetCPUInfo() ([]*CPU, error) {
 		}
 	}
 
-	logger.Log.Debug("CPU information collection completed", map[string]interface{}{
+	log.Debug("CPU information collection completed", map[string]interface{}{
 		"total_cpus": len(cpus),
 		"avg_usage": func() float64 {
 			if len(percent) == 0 {

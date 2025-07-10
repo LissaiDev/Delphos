@@ -1,116 +1,59 @@
 package monitor
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/LissaiDev/Delphos/pkg/logger"
 )
 
-// GetSystemStats retrieves comprehensive system statistics
-// Collects data from all monitoring modules and returns a consolidated view
-func GetSystemStats() (*Monitor, error) {
+// StatsService handles system statistics collection and management
+type StatsService struct {
+	logger logger.BasicLogger
+}
+
+// NewStatsService creates a new stats service instance
+func NewStatsService(log logger.BasicLogger) *StatsService {
+	return &StatsService{
+		logger: log,
+	}
+}
+
+// GetStats retrieves comprehensive system statistics
+func (s *StatsService) GetStats() (*Monitor, error) {
 	startTime := time.Now()
 
-	logger.Log.Debug("Starting system statistics collection", map[string]interface{}{
+	s.logger.Debug("Starting system statistics collection", map[string]interface{}{
 		"timestamp": startTime.Format(time.RFC3339),
 	})
 
-	// Collect host information
-	logger.Log.Debug("Collecting host information")
-	host, err := GetHostInfo()
+	// Collect all system information
+	host, err := s.collectHostInfo()
 	if err != nil {
-		logger.Log.Error("Failed to collect host information", map[string]interface{}{
-			"error": err.Error(),
-		})
 		return nil, err
 	}
-	logger.Log.Debug("Host information collected successfully", map[string]interface{}{
-		"hostname": host.Hostname,
-		"os":       host.OS,
-		"uptime":   host.UpTime,
-	})
 
-	// Collect memory information
-	logger.Log.Debug("Collecting memory information")
-	mem, err := GetMemoryInfo()
+	mem, err := s.collectMemoryInfo()
 	if err != nil {
-		logger.Log.Error("Failed to collect memory information", map[string]interface{}{
-			"error": err.Error(),
-		})
 		return nil, err
 	}
-	logger.Log.Debug("Memory information collected successfully", map[string]interface{}{
-		"total_memory_gb": mem.Total / 1024 / 1024 / 1024,
-		"used_memory_gb":  mem.Used / 1024 / 1024 / 1024,
-		"free_memory_gb":  mem.Free / 1024 / 1024 / 1024,
-		"memory_usage_percent": func() float64 {
-			if mem.Total > 0 {
-				return (mem.Used / mem.Total) * 100
-			}
-			return 0
-		}(),
-	})
 
-	// Collect CPU information
-	logger.Log.Debug("Collecting CPU information")
-	cpu, err := GetCPUInfo()
+	cpu, err := s.collectCPUInfo()
 	if err != nil {
-		logger.Log.Error("Failed to collect CPU information", map[string]interface{}{
-			"error": err.Error(),
-		})
 		return nil, err
 	}
-	logger.Log.Debug("CPU information collected successfully", map[string]interface{}{
-		"cpu_count": len(cpu),
-		"cpu_model": cpu[0].Model,
-		"cpu_cores": cpu[0].Cores,
-		"cpu_usage": cpu[0].Usage,
-	})
 
-	// Collect disk information
-	logger.Log.Debug("Collecting disk information")
-	disk, err := GetDiskInfo()
+	disk, err := s.collectDiskInfo()
 	if err != nil {
-		logger.Log.Error("Failed to collect disk information", map[string]interface{}{
-			"error": err.Error(),
-		})
 		return nil, err
 	}
-	logger.Log.Debug("Disk information collected successfully", map[string]interface{}{
-		"disk_count": len(disk),
-		"partitions": func() []string {
-			var mounts []string
-			for _, d := range disk {
-				mounts = append(mounts, d.Mountpoint)
-			}
-			return mounts
-		}(),
-	})
 
-	// Collect network information
-	logger.Log.Debug("Collecting network information")
-	net, err := GetNetworkInfo()
+	net, err := s.collectNetworkInfo()
 	if err != nil {
-		logger.Log.Error("Failed to collect network information", map[string]interface{}{
-			"error": err.Error(),
-		})
 		return nil, err
 	}
-	logger.Log.Debug("Network information collected successfully", map[string]interface{}{
-		"interface_count": len(net),
-		"interfaces": func() []string {
-			var ifaces []string
-			for _, n := range net {
-				ifaces = append(ifaces, n.InterfaceName)
-			}
-			return ifaces
-		}(),
-	})
 
-	// Calculate total collection time
-	collectionTime := time.Since(startTime)
-
-	// Return consolidated system statistics
+	// Create consolidated result
 	result := &Monitor{
 		Host:    host,
 		Memory:  mem,
@@ -119,25 +62,111 @@ func GetSystemStats() (*Monitor, error) {
 		Network: net,
 	}
 
-	logger.Log.Info("System statistics collection completed", map[string]interface{}{
-		"collection_time":    collectionTime.String(),
-		"hostname":           host.Hostname,
-		"cpu_cores":          len(cpu),
-		"disk_partitions":    len(disk),
-		"network_interfaces": len(net),
+	s.logCompletionStats(result, time.Since(startTime))
+
+	return result, nil
+}
+
+// GetStatsJSON returns system statistics as JSON
+func (s *StatsService) GetStatsJSON() ([]byte, error) {
+	stats, err := s.GetStats()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(stats)
+}
+
+// collectWithLogging is a DRY helper for collecting system info with consistent logging
+func (s *StatsService) collectHostInfo() (*Host, error) {
+	s.logger.Debug("Collecting host information")
+	result, err := GetHostInfo()
+	if err != nil {
+		s.logger.Error("Failed to collect host information", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+	s.logger.Debug("Host information collected successfully")
+	return result, nil
+}
+
+func (s *StatsService) collectMemoryInfo() (*Memory, error) {
+	s.logger.Debug("Collecting memory information")
+	result, err := GetMemoryInfo()
+	if err != nil {
+		s.logger.Error("Failed to collect memory information", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+	s.logger.Debug("Memory information collected successfully")
+	return result, nil
+}
+
+func (s *StatsService) collectCPUInfo() ([]*CPU, error) {
+	s.logger.Debug("Collecting cpu information")
+	result, err := GetCPUInfo()
+	if err != nil {
+		s.logger.Error("Failed to collect cpu information", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+	s.logger.Debug("CPU information collected successfully")
+	return result, nil
+}
+
+func (s *StatsService) collectDiskInfo() ([]*Disk, error) {
+	s.logger.Debug("Collecting disk information")
+	result, err := GetDiskInfo()
+	if err != nil {
+		s.logger.Error("Failed to collect disk information", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+	s.logger.Debug("Disk information collected successfully")
+	return result, nil
+}
+
+func (s *StatsService) collectNetworkInfo() ([]*Network, error) {
+	s.logger.Debug("Collecting network information")
+	result, err := GetNetworkInfo()
+	if err != nil {
+		s.logger.Error("Failed to collect network information", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil, err
+	}
+	s.logger.Debug("Network information collected successfully")
+	return result, nil
+}
+
+// logCompletionStats logs the completion statistics
+func (s *StatsService) logCompletionStats(result *Monitor, duration time.Duration) {
+	s.logger.Info("System statistics collection completed", map[string]interface{}{
+		"collection_time":    duration.String(),
+		"hostname":           result.Host.Hostname,
+		"cpu_cores":          len(result.CPU),
+		"disk_partitions":    len(result.Disk),
+		"network_interfaces": len(result.Network),
 		"memory_usage_percent": func() float64 {
-			if mem.Total > 0 {
-				return (mem.Used / mem.Total) * 100
+			if result.Memory.Total > 0 {
+				return (result.Memory.Used / result.Memory.Total) * 100
 			}
 			return 0
 		}(),
 		"cpu_usage_percent": func() float64 {
-			if len(cpu) > 0 {
-				return cpu[0].Usage
+			if len(result.CPU) > 0 {
+				return result.CPU[0].Usage
 			}
 			return 0
 		}(),
 	})
+}
 
-	return result, nil
+// GetSystemStats provides backward compatibility
+func GetSystemStats() (*Monitor, error) {
+	service := NewStatsService(logger.Log)
+	return service.GetStats()
 }

@@ -250,9 +250,23 @@ func (l *logger) AddHandler(handler Handler) {
 // getFields extrai campos de uma slice de mapas
 func (l *logger) getFields(fields ...map[string]interface{}) map[string]interface{} {
 	if len(fields) == 0 {
-		return nil
+		return make(map[string]interface{})
 	}
 	return fields[0]
+}
+
+// GetLevel returns the current log level
+func (l *logger) GetLevel() Level {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+	return l.level
+}
+
+// GetHandlers returns the current handlers
+func (l *logger) GetHandlers() []Handler {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+	return l.handlers
 }
 
 var Log Logger = New()
