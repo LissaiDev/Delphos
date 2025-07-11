@@ -17,8 +17,7 @@ const (
 )
 
 var SERVICES = map[Service]string{
-	Service("AUTH"):  "http://localhost:8080/auth",
-	Service("USERS"): "http://localhost:8080/users",
+	Service("DISCORD"): "https://discord.com/api/webhooks",
 }
 
 type Response struct {
