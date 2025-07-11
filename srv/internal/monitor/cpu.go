@@ -7,11 +7,13 @@ import (
 
 // GetCPUInfo returns CPU information for the system
 func GetCPUInfo() ([]*CPU, error) {
-	return getCPUInfoWithLogger(logger.Log)
+	return getCPUInfoWithLogger()
 }
 
 // getCPUInfoWithLogger returns CPU information using the provided logger
-func getCPUInfoWithLogger(log logger.BasicLogger) ([]*CPU, error) {
+func getCPUInfoWithLogger() ([]*CPU, error) {
+	log := logger.GetInstance()
+
 	log.Debug("Starting CPU information collection")
 
 	var cpus []*CPU

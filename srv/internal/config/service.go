@@ -1,9 +1,9 @@
 package config
 
 import (
-	"errors"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/LissaiDev/Delphos/pkg/logger"
@@ -16,12 +16,25 @@ type Service struct {
 	env    *Environment
 }
 
+var (
+	configService *Service
+	once          sync.Once
+)
+
 // NewService creates a new configuration service
-func NewService(log logger.BasicLogger) *Service {
+func New() *Service {
+	log := logger.GetInstance()
 	return &Service{
 		logger: log,
 		env:    &Environment{},
 	}
+}
+
+func GetInstance() *Service {
+	once.Do(func() {
+		configService = New()
+	})
+	return configService
 }
 
 // Load loads configuration from environment variables and .env file
@@ -205,21 +218,21 @@ func (s *Service) Validate() error {
 		s.logger.Error("CPU_THRESHOLD must be between 1 and 100", map[string]interface{}{
 			"cpu_threshold": s.env.CPUThreshold,
 		})
-		return errors.New("invalid CPU_THRESHOLD configuration")
+		return ErrInvalidCPUThreshold
 	}
 
 	if s.env.MemoryThreshold < 1 || s.env.MemoryThreshold > 100 {
 		s.logger.Error("MEMORY_THRESHOLD must be between 1 and 100", map[string]interface{}{
 			"memory_threshold": s.env.MemoryThreshold,
 		})
-		return errors.New("invalid MEMORY_THRESHOLD configuration")
+		return ErrInvalidMemoryThreshold
 	}
 
 	if s.env.DiskThreshold < 1 || s.env.DiskThreshold > 100 {
 		s.logger.Error("DISK_THRESHOLD must be between 1 and 100", map[string]interface{}{
 			"disk_threshold": s.env.DiskThreshold,
 		})
-		return errors.New("invalid DISK_THRESHOLD configuration")
+		return ErrInvalidDiskThreshold
 	}
 
 	return nil

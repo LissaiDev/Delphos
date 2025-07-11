@@ -16,10 +16,8 @@ type DiscordHandler struct {
 }
 
 func (d *DiscordHandler) Handle(message string) error {
-
 	d.net.Post(hermes.Service("DISCORD"), d.webhookData.url, d.BuildBody(message), nil)
 	return nil
-
 }
 
 func (d *DiscordHandler) BuildBody(message string) *map[string]any {

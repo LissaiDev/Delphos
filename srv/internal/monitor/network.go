@@ -6,21 +6,22 @@ import (
 )
 
 func GetNetworkInfo() ([]*Network, error) {
-	logger.Log.Debug("Starting network information collection")
+	log := logger.GetInstance()
+	log.Debug("Starting network information collection")
 
 	var networks []*Network
 
 	// Get network I/O counters
-	logger.Log.Debug("Collecting network I/O counters")
+	log.Debug("Collecting network I/O counters")
 	netStats, err := net.IOCounters(true)
 	if err != nil {
-		logger.Log.Error("Failed to collect network I/O counters", map[string]interface{}{
+		log.Error("Failed to collect network I/O counters", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("Network interfaces found", map[string]interface{}{
+	log.Debug("Network interfaces found", map[string]interface{}{
 		"interface_count": len(netStats),
 		"interfaces": func() []string {
 			var names []string
@@ -33,7 +34,7 @@ func GetNetworkInfo() ([]*Network, error) {
 
 	// Process each network interface
 	for i, netStat := range netStats {
-		logger.Log.Debug("Processing network interface", map[string]interface{}{
+		log.Debug("Processing network interface", map[string]interface{}{
 			"interface_index": i,
 			"interface_name":  netStat.Name,
 			"bytes_sent":      netStat.BytesSent,
@@ -51,7 +52,7 @@ func GetNetworkInfo() ([]*Network, error) {
 		networks = append(networks, network)
 	}
 
-	logger.Log.Debug("Network information collection completed", map[string]interface{}{
+	log.Debug("Network information collection completed", map[string]interface{}{
 		"total_interfaces": len(networks),
 		"total_bytes_sent": func() uint64 {
 			total := uint64(0)

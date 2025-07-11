@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/LissaiDev/Delphos/pkg/logger"
 )
@@ -14,11 +15,14 @@ type Broker struct {
 	logger     logger.BasicLogger
 }
 
-func NewBroker() *Broker {
-	return NewBrokerWithLogger(logger.Log)
-}
+var (
+	brokerInstance *Broker
+	once           sync.Once
+)
 
-func NewBrokerWithLogger(log logger.BasicLogger) *Broker {
+func New() *Broker {
+	log := logger.GetInstance()
+
 	return &Broker{
 		Clients:    make(map[chan string]bool),
 		deadClient: make(chan chan string),
@@ -106,5 +110,11 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("data: " + msg + "\n\n"))
 		flusher.Flush()
 	}
+}
 
+func GetInstance() *Broker {
+	once.Do(func() {
+		brokerInstance = New()
+	})
+	return brokerInstance
 }

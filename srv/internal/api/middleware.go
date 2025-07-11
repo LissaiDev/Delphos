@@ -55,7 +55,8 @@ func StreamingCORSMiddleware(next http.Handler) http.Handler {
 
 // logRequestStart logs the start of a request
 func logRequestStart(r *http.Request) {
-	logger.Log.Info("Incoming request", map[string]interface{}{
+	log := logger.GetInstance()
+	log.Info("Incoming request", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"remote_addr": r.RemoteAddr,
@@ -68,13 +69,14 @@ func logRequestStart(r *http.Request) {
 
 // logRequestComplete logs the completion of a request
 func logRequestComplete(r *http.Request, rw *ResponseWriter, duration time.Duration) {
+	log := logger.GetInstance()
 	// Ensure response writer implements our interface
 	if rw == nil {
-		logger.Log.Error("Response writer is nil", nil)
+		log.Error("Response writer is nil", nil)
 		return
 	}
 
-	logger.Log.Info("Request completed", map[string]interface{}{
+	log.Info("Request completed", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"duration_ms": duration.Milliseconds(),
@@ -84,7 +86,9 @@ func logRequestComplete(r *http.Request, rw *ResponseWriter, duration time.Durat
 
 // logStreamingRequestStart logs the start of a streaming request
 func logStreamingRequestStart(r *http.Request) {
-	logger.Log.Info("Incoming streaming request", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Info("Incoming streaming request", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"remote_addr": r.RemoteAddr,
@@ -94,7 +98,9 @@ func logStreamingRequestStart(r *http.Request) {
 
 // logStreamingRequestComplete logs the completion of a streaming request
 func logStreamingRequestComplete(r *http.Request, duration time.Duration) {
-	logger.Log.Info("Streaming request completed", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Info("Streaming request completed", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"duration_ms": duration.Milliseconds(),
@@ -103,13 +109,15 @@ func logStreamingRequestComplete(r *http.Request, duration time.Duration) {
 
 // logRequestError logs a request error
 func logRequestError(r *http.Request, rw *ResponseWriter) {
+	log := logger.GetInstance()
+
 	// Ensure response writer implements our interface
 	if rw == nil {
-		logger.Log.Error("Response writer is nil", nil)
+		log.Error("Response writer is nil", nil)
 		return
 	}
 
-	logger.Log.Error("Request error", map[string]interface{}{
+	log.Error("Request error", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"remote_addr": r.RemoteAddr,
@@ -121,7 +129,9 @@ func logRequestError(r *http.Request, rw *ResponseWriter) {
 
 // logRateLimitExceeded logs when the rate limit is exceeded
 func logRateLimitExceeded(r *http.Request, clientIP string) {
-	logger.Log.Warn("Rate limit exceeded", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Warn("Rate limit exceeded", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"client_ip":   clientIP,
@@ -131,7 +141,9 @@ func logRateLimitExceeded(r *http.Request, clientIP string) {
 
 // logSlowRequest logs a slow request
 func logSlowRequest(r *http.Request, rw *ResponseWriter, duration time.Duration) {
-	logger.Log.Warn("Slow request detected", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Warn("Slow request detected", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"duration_ms": duration.Milliseconds(),
@@ -140,7 +152,9 @@ func logSlowRequest(r *http.Request, rw *ResponseWriter, duration time.Duration)
 
 // logRequestMetrics logs request metrics
 func logRequestMetrics(r *http.Request, rw *ResponseWriter, duration time.Duration) {
-	logger.Log.Info("Request metrics", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Info("Request metrics", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"duration_ms": duration.Milliseconds(),
@@ -150,7 +164,9 @@ func logRequestMetrics(r *http.Request, rw *ResponseWriter, duration time.Durati
 
 // logCORSPreflight logs a CORS preflight request
 func logCORSPreflight(r *http.Request) {
-	logger.Log.Debug("CORS preflight request", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Debug("CORS preflight request", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"origin":      r.Header.Get("Origin"),
@@ -160,7 +176,9 @@ func logCORSPreflight(r *http.Request) {
 
 // logStreamingCORSPreflight logs a streaming CORS preflight request
 func logStreamingCORSPreflight(r *http.Request) {
-	logger.Log.Debug("Streaming CORS preflight request", map[string]interface{}{
+	log := logger.GetInstance()
+
+	log.Debug("Streaming CORS preflight request", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"origin":      r.Header.Get("Origin"),

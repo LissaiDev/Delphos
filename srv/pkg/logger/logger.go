@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+// Instatiating a singleton
+var (
+	LogInstance Logger
+	once        sync.Once
+)
+
 // Level represents the log level
 type Level int
 
@@ -56,28 +62,7 @@ func (l Level) Color() string {
 	}
 }
 
-// Formatter defines how to format log messages
-type Formatter interface {
-	Format(level Level, message string, fields map[string]interface{}) string
-}
-
-// Handler defines how to process log messages
-type Handler interface {
-	Handle(level Level, message string, fields map[string]interface{}) error
-}
-
 // Logger is the main logger interface
-type Logger interface {
-	Debug(message string, fields ...map[string]interface{})
-	Info(message string, fields ...map[string]interface{})
-	Warn(message string, fields ...map[string]interface{})
-	Error(message string, fields ...map[string]interface{})
-	Fatal(message string, fields ...map[string]interface{})
-	WithFields(fields map[string]interface{}) Logger
-	SetLevel(level Level)
-	SetFormatter(formatter Formatter)
-	AddHandler(handler Handler)
-}
 
 // defaultFormatter is the default implementation of Formatter
 type defaultFormatter struct {
@@ -269,4 +254,10 @@ func (l *logger) GetHandlers() []Handler {
 	return l.handlers
 }
 
-var Log Logger = New()
+func GetInstance() Logger {
+	once.Do(func() {
+		LogInstance = New()
+	})
+
+	return LogInstance
+}

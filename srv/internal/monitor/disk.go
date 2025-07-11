@@ -6,21 +6,23 @@ import (
 )
 
 func GetDiskInfo() ([]*Disk, error) {
-	logger.Log.Debug("Starting disk information collection")
+	log := logger.GetInstance()
+
+	log.Debug("Starting disk information collection")
 
 	var disks []*Disk
 
 	// Get disk partitions
-	logger.Log.Debug("Collecting disk partition information")
+	log.Debug("Collecting disk partition information")
 	parts, err := disk.Partitions(false)
 	if err != nil {
-		logger.Log.Error("Failed to collect disk partition information", map[string]interface{}{
+		log.Error("Failed to collect disk partition information", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("Disk partitions found", map[string]interface{}{
+	log.Debug("Disk partitions found", map[string]interface{}{
 		"partition_count": len(parts),
 		"partitions": func() []string {
 			var mountpoints []string
@@ -33,7 +35,7 @@ func GetDiskInfo() ([]*Disk, error) {
 
 	// Get usage information for each partition
 	for i, part := range parts {
-		logger.Log.Debug("Collecting disk usage for partition", map[string]interface{}{
+		log.Debug("Collecting disk usage for partition", map[string]interface{}{
 			"partition_index": i,
 			"mountpoint":      part.Mountpoint,
 			"filesystem_type": part.Fstype,
@@ -41,7 +43,7 @@ func GetDiskInfo() ([]*Disk, error) {
 
 		usage, err := disk.Usage(part.Mountpoint)
 		if err != nil {
-			logger.Log.Error("Failed to collect disk usage for partition", map[string]interface{}{
+			log.Error("Failed to collect disk usage for partition", map[string]interface{}{
 				"partition_index": i,
 				"mountpoint":      part.Mountpoint,
 				"error":           err.Error(),
@@ -58,7 +60,7 @@ func GetDiskInfo() ([]*Disk, error) {
 			UsedPercent: float64(usage.UsedPercent),
 		}
 
-		logger.Log.Debug("Disk usage collected for partition", map[string]interface{}{
+		log.Debug("Disk usage collected for partition", map[string]interface{}{
 			"partition_index": i,
 			"mountpoint":      diskInfo.Mountpoint,
 			"filesystem_type": diskInfo.Type,
@@ -71,7 +73,7 @@ func GetDiskInfo() ([]*Disk, error) {
 		disks = append(disks, diskInfo)
 	}
 
-	logger.Log.Debug("Disk information collection completed", map[string]interface{}{
+	log.Debug("Disk information collection completed", map[string]interface{}{
 		"total_partitions": len(disks),
 		"total_space_gb": func() float64 {
 			total := 0.0

@@ -6,19 +6,21 @@ import (
 )
 
 func GetHostInfo() (*Host, error) {
-	logger.Log.Debug("Starting host information collection")
+	log := logger.GetInstance()
+
+	log.Debug("Starting host information collection")
 
 	// Get host information
-	logger.Log.Debug("Collecting host system information")
+	log.Debug("Collecting host system information")
 	info, err := host.Info()
 	if err != nil {
-		logger.Log.Error("Failed to collect host information", map[string]interface{}{
+		log.Error("Failed to collect host information", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("Host information collected", map[string]interface{}{
+	log.Debug("Host information collected", map[string]interface{}{
 		"hostname":         info.Hostname,
 		"os":               info.OS,
 		"platform":         info.Platform,
@@ -34,7 +36,7 @@ func GetHostInfo() (*Host, error) {
 		UpTime:   info.Uptime,
 	}
 
-	logger.Log.Debug("Host information collection completed", map[string]interface{}{
+	log.Debug("Host information collection completed", map[string]interface{}{
 		"hostname":       hostInfo.Hostname,
 		"os":             hostInfo.OS,
 		"uptime_seconds": hostInfo.UpTime,

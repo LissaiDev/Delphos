@@ -6,19 +6,21 @@ import (
 )
 
 func GetMemoryInfo() (*Memory, error) {
-	logger.Log.Debug("Starting memory information collection")
+	log := logger.GetInstance()
+
+	log.Debug("Starting memory information collection")
 
 	// Get virtual memory information
-	logger.Log.Debug("Collecting virtual memory information")
+	log.Debug("Collecting virtual memory information")
 	info, err := mem.VirtualMemory()
 	if err != nil {
-		logger.Log.Error("Failed to collect virtual memory information", map[string]interface{}{
+		log.Error("Failed to collect virtual memory information", map[string]interface{}{
 			"error": err.Error(),
 		})
 		return nil, err
 	}
 
-	logger.Log.Debug("Virtual memory information collected", map[string]interface{}{
+	log.Debug("Virtual memory information collected", map[string]interface{}{
 		"total_bytes":     info.Total,
 		"available_bytes": info.Available,
 		"used_bytes":      info.Used,
@@ -26,16 +28,16 @@ func GetMemoryInfo() (*Memory, error) {
 	})
 
 	// Get swap memory information
-	logger.Log.Debug("Collecting swap memory information")
+	log.Debug("Collecting swap memory information")
 	swapInfo, swapErr := mem.SwapMemory()
 	if swapErr != nil {
-		logger.Log.Error("Failed to collect swap memory information", map[string]interface{}{
+		log.Error("Failed to collect swap memory information", map[string]interface{}{
 			"error": swapErr.Error(),
 		})
 		return nil, swapErr
 	}
 
-	logger.Log.Debug("Swap memory information collected", map[string]interface{}{
+	log.Debug("Swap memory information collected", map[string]interface{}{
 		"swap_total_bytes": swapInfo.Total,
 		"swap_free_bytes":  swapInfo.Free,
 		"swap_used_bytes":  swapInfo.Used,
@@ -51,7 +53,7 @@ func GetMemoryInfo() (*Memory, error) {
 		SwapUsed:  float64(swapInfo.Used) / 1024 / 1024,
 	}
 
-	logger.Log.Debug("Memory information collection completed", map[string]interface{}{
+	log.Debug("Memory information collection completed", map[string]interface{}{
 		"total_memory_mb": memoryInfo.Total,
 		"free_memory_mb":  memoryInfo.Free,
 		"used_memory_mb":  memoryInfo.Used,

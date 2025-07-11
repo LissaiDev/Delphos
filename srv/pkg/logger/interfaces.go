@@ -38,3 +38,25 @@ type LevelProvider interface {
 type OutputProvider interface {
 	GetHandlers() []Handler
 }
+
+// Formatter defines how to format log messages
+type Formatter interface {
+	Format(level Level, message string, fields map[string]interface{}) string
+}
+
+// Handler defines how to process log messages
+type Handler interface {
+	Handle(level Level, message string, fields map[string]interface{}) error
+}
+
+type Logger interface {
+	Debug(message string, fields ...map[string]interface{})
+	Info(message string, fields ...map[string]interface{})
+	Warn(message string, fields ...map[string]interface{})
+	Error(message string, fields ...map[string]interface{})
+	Fatal(message string, fields ...map[string]interface{})
+	WithFields(fields map[string]interface{}) Logger
+	SetLevel(level Level)
+	SetFormatter(formatter Formatter)
+	AddHandler(handler Handler)
+}

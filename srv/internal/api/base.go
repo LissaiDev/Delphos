@@ -10,10 +10,12 @@ import (
 // CORSHandler wraps HTTP handlers with CORS headers and request logging
 // Provides consistent CORS configuration and request/response logging across all endpoints
 func CORSHandler(w http.ResponseWriter, r *http.Request, handler http.HandlerFunc) {
+	log := logger.GetInstance()
+
 	startTime := time.Now()
 
 	// Log incoming request details
-	logger.Log.Info("Incoming HTTP request", map[string]interface{}{
+	log.Info("Incoming HTTP request", map[string]interface{}{
 		"method":      r.Method,
 		"url":         r.URL.String(),
 		"remote_addr": r.RemoteAddr,
@@ -28,7 +30,7 @@ func CORSHandler(w http.ResponseWriter, r *http.Request, handler http.HandlerFun
 
 	// Handle preflight OPTIONS requests
 	if r.Method == http.MethodOptions {
-		logger.Log.Info("Handling CORS preflight request", map[string]interface{}{
+		log.Info("Handling CORS preflight request", map[string]interface{}{
 			"method": r.Method,
 			"url":    r.URL.String(),
 		})
@@ -37,7 +39,7 @@ func CORSHandler(w http.ResponseWriter, r *http.Request, handler http.HandlerFun
 	}
 
 	// Log request processing start
-	logger.Log.Debug("Processing request", map[string]interface{}{
+	log.Debug("Processing request", map[string]interface{}{
 		"method": r.Method,
 		"url":    r.URL.String(),
 	})
@@ -47,7 +49,7 @@ func CORSHandler(w http.ResponseWriter, r *http.Request, handler http.HandlerFun
 
 	// Log request completion
 	duration := time.Since(startTime)
-	logger.Log.Info("Request completed", map[string]interface{}{
+	log.Info("Request completed", map[string]interface{}{
 		"method":   r.Method,
 		"url":      r.URL.String(),
 		"duration": duration.String(),

@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/LissaiDev/Delphos/pkg/logger"
+)
+
+var (
+	HermesInstance Fetcher
+	once           sync.Once
 )
 
 type HermesClient struct {
@@ -202,7 +208,7 @@ func (h *HermesClient) executeRequest(request *http.Request, url string, req *Re
 	return data, response.StatusCode, nil
 }
 
-func NewHermesClient(logger logger.Logger, retries int, retryTimeout time.Duration) *HermesClient {
+func New(logger logger.Logger, retries int, retryTimeout time.Duration) Fetcher {
 	// Set default values if invalid parameters are provided
 	if retries < 0 {
 		retries = 0
@@ -342,4 +348,13 @@ func (h *HermesClient) Patch(service Service, url string, body *map[string]any, 
 	}
 
 	return h.Fetch(req)
+}
+
+func GetInstance() Fetcher {
+	log := logger.GetInstance()
+	once.Do(func() {
+		HermesInstance = New(log, 3, time.Second*10)
+	})
+
+	return HermesInstance
 }

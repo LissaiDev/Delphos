@@ -17,7 +17,12 @@ type Environment struct {
 
 // Configuration errors
 var (
-	ErrInvalidPort     = errors.New("invalid port configuration")
-	ErrInvalidInterval = errors.New("invalid interval configuration")
-	ErrInvalidName     = errors.New("invalid name configuration")
+	ErrInvalidPort            = errors.New("invalid port configuration")
+	ErrInvalidInterval        = errors.New("invalid interval configuration")
+	ErrInvalidName            = errors.New("invalid name configuration")
+	ErrInvalidWebhookUrl      = errors.New("invalid webhook url configuration")
+	ErrInvalidWebhookUsername = errors.New("invalid webhook username configuration")
+	ErrInvalidCPUThreshold    = errors.New("invalid cpu threshold configuration")
+	ErrInvalidMemoryThreshold = errors.New("invalid memory threshold configuration")
+	ErrInvalidDiskThreshold   = errors.New("invalid disk threshold configuration")
 )
