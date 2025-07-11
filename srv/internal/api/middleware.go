@@ -53,6 +53,7 @@ func StreamingCORSMiddleware(next http.Handler) http.Handler {
 
 // Helper functions to eliminate DRY violations
 
+// logRequestStart logs the start of a request
 func logRequestStart(r *http.Request) {
 	logger.Log.Info("Incoming request", map[string]interface{}{
 		"method":      r.Method,
@@ -65,6 +66,7 @@ func logRequestStart(r *http.Request) {
 	})
 }
 
+// logRequestComplete logs the completion of a request
 func logRequestComplete(r *http.Request, rw *ResponseWriter, duration time.Duration) {
 	// Ensure response writer implements our interface
 	if rw == nil {
@@ -80,6 +82,7 @@ func logRequestComplete(r *http.Request, rw *ResponseWriter, duration time.Durat
 	})
 }
 
+// logStreamingRequestStart logs the start of a streaming request
 func logStreamingRequestStart(r *http.Request) {
 	logger.Log.Info("Incoming streaming request", map[string]interface{}{
 		"method":      r.Method,
@@ -89,6 +92,7 @@ func logStreamingRequestStart(r *http.Request) {
 	})
 }
 
+// logStreamingRequestComplete logs the completion of a streaming request
 func logStreamingRequestComplete(r *http.Request, duration time.Duration) {
 	logger.Log.Info("Streaming request completed", map[string]interface{}{
 		"method":      r.Method,
@@ -97,6 +101,7 @@ func logStreamingRequestComplete(r *http.Request, duration time.Duration) {
 	})
 }
 
+// logRequestError logs a request error
 func logRequestError(r *http.Request, rw *ResponseWriter) {
 	// Ensure response writer implements our interface
 	if rw == nil {
@@ -114,6 +119,7 @@ func logRequestError(r *http.Request, rw *ResponseWriter) {
 	})
 }
 
+// logRateLimitExceeded logs when the rate limit is exceeded
 func logRateLimitExceeded(r *http.Request, clientIP string) {
 	logger.Log.Warn("Rate limit exceeded", map[string]interface{}{
 		"method":      r.Method,
@@ -123,6 +129,7 @@ func logRateLimitExceeded(r *http.Request, clientIP string) {
 	})
 }
 
+// logSlowRequest logs a slow request
 func logSlowRequest(r *http.Request, rw *ResponseWriter, duration time.Duration) {
 	logger.Log.Warn("Slow request detected", map[string]interface{}{
 		"method":      r.Method,
@@ -131,6 +138,7 @@ func logSlowRequest(r *http.Request, rw *ResponseWriter, duration time.Duration)
 	})
 }
 
+// logRequestMetrics logs request metrics
 func logRequestMetrics(r *http.Request, rw *ResponseWriter, duration time.Duration) {
 	logger.Log.Info("Request metrics", map[string]interface{}{
 		"method":      r.Method,
@@ -140,6 +148,7 @@ func logRequestMetrics(r *http.Request, rw *ResponseWriter, duration time.Durati
 	})
 }
 
+// logCORSPreflight logs a CORS preflight request
 func logCORSPreflight(r *http.Request) {
 	logger.Log.Debug("CORS preflight request", map[string]interface{}{
 		"method":      r.Method,
@@ -149,6 +158,7 @@ func logCORSPreflight(r *http.Request) {
 	})
 }
 
+// logStreamingCORSPreflight logs a streaming CORS preflight request
 func logStreamingCORSPreflight(r *http.Request) {
 	logger.Log.Debug("Streaming CORS preflight request", map[string]interface{}{
 		"method":      r.Method,
@@ -158,6 +168,7 @@ func logStreamingCORSPreflight(r *http.Request) {
 	})
 }
 
+// setCORSHeaders sets CORS headers
 func setCORSHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -165,6 +176,7 @@ func setCORSHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 }
 
+// setStreamingCORSHeaders sets CORS headers for streaming
 func setStreamingCORSHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -172,6 +184,7 @@ func setStreamingCORSHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 }
 
+// setSecurityHeaders sets security headers
 func setSecurityHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("X-Frame-Options", "DENY")
@@ -179,6 +192,7 @@ func setSecurityHeaders(w http.ResponseWriter) {
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 }
 
+// setStreamingSecurityHeaders sets security headers for streaming
 func setStreamingSecurityHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 }

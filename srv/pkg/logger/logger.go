@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Level representa o nível de log
+// Level represents the log level
 type Level int
 
 const (
@@ -20,7 +20,7 @@ const (
 	FATAL
 )
 
-// String retorna a representação em string do nível
+// String returns the string representation of the log level
 func (l Level) String() string {
 	switch l {
 	case DEBUG:
@@ -38,7 +38,7 @@ func (l Level) String() string {
 	}
 }
 
-// Color retorna a cor ANSI para o nível
+// Color returns the ANSI color for the log level
 func (l Level) Color() string {
 	switch l {
 	case DEBUG:
@@ -56,17 +56,17 @@ func (l Level) Color() string {
 	}
 }
 
-// Formatter define como formatar as mensagens de log
+// Formatter defines how to format log messages
 type Formatter interface {
 	Format(level Level, message string, fields map[string]interface{}) string
 }
 
-// Handler define como processar as mensagens de log
+// Handler defines how to process log messages
 type Handler interface {
 	Handle(level Level, message string, fields map[string]interface{}) error
 }
 
-// Logger é a interface principal do logger
+// Logger is the main logger interface
 type Logger interface {
 	Debug(message string, fields ...map[string]interface{})
 	Info(message string, fields ...map[string]interface{})
@@ -79,13 +79,13 @@ type Logger interface {
 	AddHandler(handler Handler)
 }
 
-// defaultFormatter é a implementação padrão do formatter
+// defaultFormatter is the default implementation of Formatter
 type defaultFormatter struct {
 	useColors bool
 	showTime  bool
 }
 
-// Format formata a mensagem de log
+// Format formats the log message
 func (f *defaultFormatter) Format(level Level, message string, fields map[string]interface{}) string {
 	var result string
 
@@ -111,13 +111,13 @@ func (f *defaultFormatter) Format(level Level, message string, fields map[string
 	return result
 }
 
-// defaultHandler é a implementação padrão do handler
+// defaultHandler is the default implementation of Handler
 type defaultHandler struct {
 	writer io.Writer
 	mutex  sync.Mutex
 }
 
-// Handle processa a mensagem de log
+// Handle processes the log message
 func (h *defaultHandler) Handle(level Level, message string, fields map[string]interface{}) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -126,7 +126,7 @@ func (h *defaultHandler) Handle(level Level, message string, fields map[string]i
 	return err
 }
 
-// logger é a implementação principal do Logger
+// logger is the main implementation of Logger
 type logger struct {
 	level     Level
 	formatter Formatter
@@ -135,7 +135,7 @@ type logger struct {
 	mutex     sync.RWMutex
 }
 
-// New cria um novo logger
+// New creates a new logger
 func New() Logger {
 	return &logger{
 		level:     INFO,
@@ -145,14 +145,14 @@ func New() Logger {
 	}
 }
 
-// NewWithLevel cria um novo logger com nível específico
+// NewWithLevel creates a new logger with a specific level
 func NewWithLevel(level Level) Logger {
 	l := New()
 	l.SetLevel(level)
 	return l
 }
 
-// log registra uma mensagem no nível especificado
+// log records a message at the specified level
 func (l *logger) log(level Level, message string, fields map[string]interface{}) {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
@@ -247,7 +247,7 @@ func (l *logger) AddHandler(handler Handler) {
 	l.handlers = append(l.handlers, handler)
 }
 
-// getFields extrai campos de uma slice de mapas
+// getFields extracts fields from a slice of maps
 func (l *logger) getFields(fields ...map[string]interface{}) map[string]interface{} {
 	if len(fields) == 0 {
 		return make(map[string]interface{})

@@ -9,8 +9,8 @@ import (
 )
 
 // MiddlewareFactory creates middleware with proper dependencies and configuration
-// Stateless middlewares (CORS, Security) devem ser usados diretamente das funções puras
-// Middlewares com dependências (logger, config) devem ser criados via factory
+// Stateless middlewares (CORS, Security) should be used directly from pure functions
+// Middlewares with dependencies (logger, config) should be created via the factory
 
 type RateLimitConfig struct {
 	Window time.Duration
@@ -29,7 +29,7 @@ func NewMiddlewareFactory(log logger.BasicLogger, rateLimitConfig RateLimitConfi
 	}
 }
 
-// LoggingMiddleware cria um middleware de logging com logger injetado
+// LoggingMiddleware creates a logging middleware with injected logger
 func (f *MiddlewareFactory) LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
@@ -54,7 +54,7 @@ func (f *MiddlewareFactory) LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// ErrorLoggingMiddleware cria um middleware de logging de erro
+// ErrorLoggingMiddleware creates an error logging middleware
 func (f *MiddlewareFactory) ErrorLoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errorWriter := NewResponseWriter(w)
@@ -70,7 +70,7 @@ func (f *MiddlewareFactory) ErrorLoggingMiddleware(next http.Handler) http.Handl
 	})
 }
 
-// RateLimitMiddleware thread-safe por IP
+// RateLimitMiddleware is thread-safe per IP
 func (f *MiddlewareFactory) RateLimitMiddleware(next http.Handler) http.Handler {
 	clients := sync.Map{}
 	window := f.rateLimitConfig.Window
@@ -96,7 +96,7 @@ func (f *MiddlewareFactory) RateLimitMiddleware(next http.Handler) http.Handler 
 	})
 }
 
-// MetricsMiddleware cria um middleware de métricas
+// MetricsMiddleware creates a metrics middleware
 func (f *MiddlewareFactory) MetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()

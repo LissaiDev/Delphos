@@ -4,9 +4,9 @@ import (
 	"net/http"
 )
 
-// MiddlewareChain representa uma cadeia de middlewares.
-// Use Add para adicionar middlewares (funções puras ou da factory).
-// Exemplo:
+// MiddlewareChain represents a chain of middlewares.
+// Use Add to add middlewares (pure functions or from the factory).
+// Example:
 //
 //	factory := NewMiddlewareFactory(logger.Log, RateLimitConfig{Window: time.Second})
 //	chain := NewMiddlewareChain().
