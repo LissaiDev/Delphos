@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"strconv"
 	"time"
@@ -66,6 +67,9 @@ func (s *Service) setDefaults() {
 	s.env.Name = "Delphos Server API"
 	s.env.Port = ":8080"
 	s.env.Interval = 5
+	s.env.CPUThreshold = 80.0
+	s.env.MemoryThreshold = 90.0
+	s.env.DiskThreshold = 90.0
 }
 
 // loadDotEnv attempts to load .env file
@@ -82,11 +86,17 @@ func (s *Service) loadFromEnv() error {
 	name, nameExists := os.LookupEnv("NAME")
 	port, portExists := os.LookupEnv("PORT")
 	intervalStr, intervalExists := os.LookupEnv("INTERVAL")
+	cpuThresholdStr, cpuThresholdExists := os.LookupEnv("CPU_THRESHOLD")
+	memoryThresholdStr, memoryThresholdExists := os.LookupEnv("MEMORY_THRESHOLD")
+	diskThresholdStr, diskThresholdExists := os.LookupEnv("DISK_THRESHOLD")
 
 	s.logger.Debug("Environment variables status", map[string]interface{}{
-		"NAME_exists":     nameExists,
-		"PORT_exists":     portExists,
-		"INTERVAL_exists": intervalExists,
+		"NAME_exists":             nameExists,
+		"PORT_exists":             portExists,
+		"INTERVAL_exists":         intervalExists,
+		"CPU_THRESHOLD_exists":    cpuThresholdExists,
+		"MEMORY_THRESHOLD_exists": memoryThresholdExists,
+		"DISK_THRESHOLD_exists":   diskThresholdExists,
 	})
 
 	// Load values if they exist
@@ -110,10 +120,49 @@ func (s *Service) loadFromEnv() error {
 		}
 	}
 
+	if cpuThresholdExists {
+		if v, err := strconv.ParseFloat(cpuThresholdStr, 64); err == nil {
+			s.env.CPUThreshold = v
+		} else {
+			s.logger.Warn("Failed to parse CPU_THRESHOLD environment variable, using default", map[string]interface{}{
+				"value":   cpuThresholdStr,
+				"error":   err.Error(),
+				"default": s.env.CPUThreshold,
+			})
+		}
+	}
+
+	if memoryThresholdExists {
+		if v, err := strconv.ParseFloat(memoryThresholdStr, 64); err == nil {
+			s.env.MemoryThreshold = v
+		} else {
+			s.logger.Warn("Failed to parse MEMORY_THRESHOLD environment variable, using default", map[string]interface{}{
+				"value":   memoryThresholdStr,
+				"error":   err.Error(),
+				"default": s.env.MemoryThreshold,
+			})
+		}
+	}
+
+	if diskThresholdExists {
+		if v, err := strconv.ParseFloat(diskThresholdStr, 64); err == nil {
+			s.env.DiskThreshold = v
+		} else {
+			s.logger.Warn("Failed to parse DISK_THRESHOLD environment variable, using default", map[string]interface{}{
+				"value":   diskThresholdStr,
+				"error":   err.Error(),
+				"default": s.env.DiskThreshold,
+			})
+		}
+	}
+
 	s.logger.Info("Configuration loaded", map[string]interface{}{
-		"name":     s.env.Name,
-		"port":     s.env.Port,
-		"interval": s.env.Interval,
+		"name":             s.env.Name,
+		"port":             s.env.Port,
+		"interval":         s.env.Interval,
+		"cpu_threshold":    s.env.CPUThreshold,
+		"memory_threshold": s.env.MemoryThreshold,
+		"disk_threshold":   s.env.DiskThreshold,
 	})
 
 	return nil
@@ -135,6 +184,27 @@ func (s *Service) Validate() error {
 			"interval": s.env.Interval,
 		})
 		return ErrInvalidInterval
+	}
+
+	if s.env.CPUThreshold < 1 || s.env.CPUThreshold > 100 {
+		s.logger.Error("CPU_THRESHOLD must be between 1 and 100", map[string]interface{}{
+			"cpu_threshold": s.env.CPUThreshold,
+		})
+		return errors.New("invalid CPU_THRESHOLD configuration")
+	}
+
+	if s.env.MemoryThreshold < 1 || s.env.MemoryThreshold > 100 {
+		s.logger.Error("MEMORY_THRESHOLD must be between 1 and 100", map[string]interface{}{
+			"memory_threshold": s.env.MemoryThreshold,
+		})
+		return errors.New("invalid MEMORY_THRESHOLD configuration")
+	}
+
+	if s.env.DiskThreshold < 1 || s.env.DiskThreshold > 100 {
+		s.logger.Error("DISK_THRESHOLD must be between 1 and 100", map[string]interface{}{
+			"disk_threshold": s.env.DiskThreshold,
+		})
+		return errors.New("invalid DISK_THRESHOLD configuration")
 	}
 
 	return nil
