@@ -85,7 +85,7 @@ func (s *StatsService) GetStats() (*Monitor, error) {
 		avg := sum / float64(len(cpu))
 		if avg > cfg.CPUThreshold {
 			_ = s.notifier.Notify(
-				fmt.Sprintf("ALERT: CPU usage above threshold (%.1f%% > %.1f%%)", avg, cfg.CPUThreshold),
+				fmt.Sprintf("[ALERT]: CPU usage above threshold (%.1f%% > %.1f%%)", avg, cfg.CPUThreshold),
 			)
 		}
 	}
@@ -95,7 +95,7 @@ func (s *StatsService) GetStats() (*Monitor, error) {
 		memPercent := (mem.Used / mem.Total) * 100
 		if memPercent > cfg.MemoryThreshold {
 			_ = s.notifier.Notify(
-				fmt.Sprintf("ALERT: Memory usage above threshold (%.1f%% > %.1f%%)", memPercent, cfg.MemoryThreshold),
+				fmt.Sprintf("[ALERT]: Memory usage above threshold (%.1f%% > %.1f%%)", memPercent, cfg.MemoryThreshold),
 			)
 		}
 	}
@@ -104,7 +104,7 @@ func (s *StatsService) GetStats() (*Monitor, error) {
 	for _, d := range disk {
 		if d.UsedPercent > cfg.DiskThreshold {
 			_ = s.notifier.Notify(
-				fmt.Sprintf("ALERT: Disk usage on %s above threshold (%.1f%% > %.1f%%)", d.Mountpoint, d.UsedPercent, cfg.DiskThreshold),
+				fmt.Sprintf("[ALERT]: Disk usage on %s above threshold (%.1f%% > %.1f%%)", d.Mountpoint, d.UsedPercent, cfg.DiskThreshold),
 			)
 		}
 	}

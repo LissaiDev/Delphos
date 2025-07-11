@@ -93,7 +93,7 @@ func (f *defaultFormatter) Format(level Level, message string, fields map[string
 		}
 	}
 
-	return result
+	return result + "\n---"
 }
 
 // defaultHandler is the default implementation of Handler
