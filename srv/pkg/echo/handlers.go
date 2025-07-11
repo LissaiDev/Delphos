@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"github.com/LissaiDev/Delphos/internal/config"
 	"github.com/LissaiDev/Delphos/pkg/hermes"
 )
 
@@ -32,8 +33,8 @@ func NewDiscordHandler(net hermes.Fetcher) Handler {
 	return &DiscordHandler{
 		net: net,
 		webhookData: WebhookData{
-			url:      "1393016196697428018/kW_CGkQ2oleFG_bNQqGzmzcTJWCYFBnkFpKqmxPMd0kv8Gk2e-0JwsGrGFnIv1SDpQzp",
-			username: "Delphos Logging System",
+			url:      config.Env.WebhookUrl,
+			username: config.Env.WebhookUsername,
 		},
 	}
 }

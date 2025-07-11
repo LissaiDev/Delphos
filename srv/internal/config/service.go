@@ -70,6 +70,8 @@ func (s *Service) setDefaults() {
 	s.env.CPUThreshold = 80.0
 	s.env.MemoryThreshold = 90.0
 	s.env.DiskThreshold = 90.0
+	s.env.WebhookUrl = ""
+	s.env.WebhookUsername = ""
 }
 
 // loadDotEnv attempts to load .env file
@@ -89,6 +91,8 @@ func (s *Service) loadFromEnv() error {
 	cpuThresholdStr, cpuThresholdExists := os.LookupEnv("CPU_THRESHOLD")
 	memoryThresholdStr, memoryThresholdExists := os.LookupEnv("MEMORY_THRESHOLD")
 	diskThresholdStr, diskThresholdExists := os.LookupEnv("DISK_THRESHOLD")
+	webhookUrl, webhookUrlExists := os.LookupEnv("WEBHOOK_URL")
+	webhookUsername, webhookUsernameExists := os.LookupEnv("WEBHOOK_USERNAME")
 
 	s.logger.Debug("Environment variables status", map[string]interface{}{
 		"NAME_exists":             nameExists,
@@ -97,6 +101,8 @@ func (s *Service) loadFromEnv() error {
 		"CPU_THRESHOLD_exists":    cpuThresholdExists,
 		"MEMORY_THRESHOLD_exists": memoryThresholdExists,
 		"DISK_THRESHOLD_exists":   diskThresholdExists,
+		"WEBHOOK_URL_exists":      webhookUrlExists,
+		"WEBHOOK_USERNAME_exists": webhookUsernameExists,
 	})
 
 	// Load values if they exist
@@ -156,6 +162,13 @@ func (s *Service) loadFromEnv() error {
 		}
 	}
 
+	if webhookUrlExists {
+		s.env.WebhookUrl = webhookUrl
+	}
+	if webhookUsernameExists {
+		s.env.WebhookUsername = webhookUsername
+	}
+
 	s.logger.Info("Configuration loaded", map[string]interface{}{
 		"name":             s.env.Name,
 		"port":             s.env.Port,
@@ -163,6 +176,8 @@ func (s *Service) loadFromEnv() error {
 		"cpu_threshold":    s.env.CPUThreshold,
 		"memory_threshold": s.env.MemoryThreshold,
 		"disk_threshold":   s.env.DiskThreshold,
+		"webhook_url":      s.env.WebhookUrl,
+		"webhook_username": s.env.WebhookUsername,
 	})
 
 	return nil

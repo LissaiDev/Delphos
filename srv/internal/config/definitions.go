@@ -11,6 +11,8 @@ type Environment struct {
 	CPUThreshold    float64 // CPU usage threshold in percentage
 	MemoryThreshold float64 // Memory usage threshold in percentage
 	DiskThreshold   float64 // Disk usage threshold in percentage
+	WebhookUrl      string  // Discord webhook URL for notifications
+	WebhookUsername string  // Username to use for Discord webhook notifications
 }
 
 // Configuration errors
