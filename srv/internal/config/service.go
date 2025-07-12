@@ -85,6 +85,8 @@ func (s *Service) setDefaults() {
 	s.env.DiskThreshold = 90.0
 	s.env.WebhookUrl = ""
 	s.env.WebhookUsername = ""
+	s.env.Background = false
+	s.env.Cooldown = 30
 }
 
 // loadDotEnv attempts to load .env file
@@ -106,6 +108,8 @@ func (s *Service) loadFromEnv() error {
 	diskThresholdStr, diskThresholdExists := os.LookupEnv("DISK_THRESHOLD")
 	webhookUrl, webhookUrlExists := os.LookupEnv("WEBHOOK_URL")
 	webhookUsername, webhookUsernameExists := os.LookupEnv("WEBHOOK_USERNAME")
+	backgroundStr, backgroundExists := os.LookupEnv("BACKGROUND")
+	cooldownStr, cooldownExists := os.LookupEnv("COOLDOWN")
 
 	s.logger.Debug("Environment variables status", map[string]interface{}{
 		"NAME_exists":             nameExists,
@@ -116,6 +120,8 @@ func (s *Service) loadFromEnv() error {
 		"DISK_THRESHOLD_exists":   diskThresholdExists,
 		"WEBHOOK_URL_exists":      webhookUrlExists,
 		"WEBHOOK_USERNAME_exists": webhookUsernameExists,
+		"BACKGROUND_exists":       backgroundExists,
+		"COOLDOWN_exists":         cooldownExists,
 	})
 
 	// Load values if they exist
@@ -181,6 +187,28 @@ func (s *Service) loadFromEnv() error {
 	if webhookUsernameExists {
 		s.env.WebhookUsername = webhookUsername
 	}
+	if backgroundExists {
+		if v, err := strconv.ParseBool(backgroundStr); err == nil {
+			s.env.Background = v
+		} else {
+			s.logger.Warn("Failed to parse BACKGROUND environment variable, using default", map[string]interface{}{
+				"value":   backgroundStr,
+				"error":   err.Error(),
+				"default": s.env.Background,
+			})
+		}
+	}
+	if cooldownExists {
+		if v, err := strconv.Atoi(cooldownStr); err == nil {
+			s.env.Cooldown = v
+		} else {
+			s.logger.Warn("Failed to parse COOLDOWN environment variable, using default", map[string]interface{}{
+				"value":   cooldownStr,
+				"error":   err.Error(),
+				"default": s.env.Cooldown,
+			})
+		}
+	}
 
 	s.logger.Info("Configuration loaded", map[string]interface{}{
 		"name":             s.env.Name,
@@ -191,6 +219,8 @@ func (s *Service) loadFromEnv() error {
 		"disk_threshold":   s.env.DiskThreshold,
 		"webhook_url":      s.env.WebhookUrl,
 		"webhook_username": s.env.WebhookUsername,
+		"background":       s.env.Background,
+		"cooldown":         s.env.Cooldown,
 	})
 
 	return nil
@@ -233,6 +263,13 @@ func (s *Service) Validate() error {
 			"disk_threshold": s.env.DiskThreshold,
 		})
 		return ErrInvalidDiskThreshold
+	}
+
+	if s.env.Cooldown <= 0 {
+		s.logger.Error("COOLDOWN must be positive", map[string]interface{}{
+			"cooldown": s.env.Cooldown,
+		})
+		return ErrInvalidCooldown
 	}
 
 	return nil

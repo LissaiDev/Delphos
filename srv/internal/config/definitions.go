@@ -13,6 +13,8 @@ type Environment struct {
 	DiskThreshold   float64 // Disk usage threshold in percentage
 	WebhookUrl      string  // Discord webhook URL for notifications
 	WebhookUsername string  // Username to use for Discord webhook notifications
+	Background      bool    // If true, always checks stats in background (without broadcast)
+	Cooldown        int     // Cooldown period for notifications (in seconds)
 }
 
 // Configuration errors
@@ -25,4 +27,6 @@ var (
 	ErrInvalidCPUThreshold    = errors.New("invalid cpu threshold configuration")
 	ErrInvalidMemoryThreshold = errors.New("invalid memory threshold configuration")
 	ErrInvalidDiskThreshold   = errors.New("invalid disk threshold configuration")
+	ErrInvalidBackground      = errors.New("invalid background configuration")
+	ErrInvalidCooldown        = errors.New("invalid cooldown configuration")
 )

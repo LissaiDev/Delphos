@@ -214,9 +214,9 @@ func (s *StatsService) logCompletionStats(result *Monitor, duration time.Duratio
 
 func GetInstance() *StatsService {
 	log := logger.GetInstance()
-	echo := echo.GetInstance()
+	notifier := echo.GetInstance()
 	once.Do(func() {
-		StatsServiceInstance = New(log, echo)
+		StatsServiceInstance = New(log, notifier)
 	})
 	return StatsServiceInstance
 }

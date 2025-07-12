@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/LissaiDev/Delphos/internal/config"
 	"github.com/LissaiDev/Delphos/pkg/hermes"
 	"github.com/LissaiDev/Delphos/pkg/logger"
 )
@@ -97,14 +98,14 @@ func New() Notifier {
 	log := logger.GetInstance()
 
 	log.Info("Initializing Echo notification system", map[string]interface{}{
-		"cooldown": "30s",
+		"cooldown": config.Env.Cooldown,
 	})
 
 	return &Echo{
 		Handlers: []Handler{
 			NewDiscordHandler(net),
 		},
-		cooldown: 30 * time.Second,
+		cooldown: time.Duration(config.Env.Cooldown) * time.Second,
 		logger:   log,
 	}
 }

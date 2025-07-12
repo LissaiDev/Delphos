@@ -59,7 +59,7 @@ func (app *Application) startStatsBackgroundProcess() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if len(app.broker.Clients) == 0 {
+		if len(app.broker.Clients) == 0 && !app.config.Background {
 			continue
 		}
 
@@ -71,7 +71,9 @@ func (app *Application) startStatsBackgroundProcess() {
 			continue
 		}
 
-		app.broker.Broadcast(string(data))
+		if len(app.broker.Clients) > 0 {
+			app.broker.Broadcast(string(data))
+		}
 	}
 }
 
